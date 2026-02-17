@@ -18,6 +18,7 @@
         <WindowsAppSDKSelfContained>false</WindowsAppSDKSelfContained>
         <EnableDefaultCompileItems>true</EnableDefaultCompileItems>
         <GenerateProgramFile>false</GenerateProgramFile>
+        <Nullable>enable</Nullable>
         <SatelliteResourceLanguages>_</SatelliteResourceLanguages>
 	</PropertyGroup>
     <PropertyGroup Condition=" '$(Platform)' == 'AnyCPU' ">

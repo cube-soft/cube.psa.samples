@@ -54,8 +54,7 @@ public sealed class PsaExtensionTask : IBackgroundTask
     public void Run(IBackgroundTaskInstance task)
     {
         var deferral = task?.GetDeferral();
-        if (deferral is null) return;
-
+        if (task is null || deferral is null) return;
         task.Canceled += (_, _) => deferral.Complete();
 
         var details = task.TriggerDetails as PrintSupportExtensionTriggerDetails;

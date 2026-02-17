@@ -50,9 +50,10 @@ public sealed class PsaVirtualPrinterTask : IBackgroundTask
     public void Run(IBackgroundTaskInstance task)
     {
         var deferral = task?.GetDeferral();
-        if (deferral is null) return;
+        if (task is null || deferral is null) return;
+        task.Canceled += (_, _) => deferral.Complete();
 
-        var details = task.TriggerDetails as PrintWorkflowVirtualPrinterTriggerDetails;
+        var details = task?.TriggerDetails as PrintWorkflowVirtualPrinterTriggerDetails;
         var session = details?.VirtualPrinterSession;
         if (session is null) return;
 
