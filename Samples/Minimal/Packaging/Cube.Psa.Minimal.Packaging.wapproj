@@ -43,8 +43,11 @@
     <GenerateAppInstallerFile>false</GenerateAppInstallerFile>
     <PackageCertificateThumbprint>472582EC0F72391A3F346AA088C02A5D1ECE0A29</PackageCertificateThumbprint>
     <AppxPackageSigningTimestampDigestAlgorithm>SHA256</AppxPackageSigningTimestampDigestAlgorithm>
-    <AppxAutoIncrementPackageRevision>False</AppxAutoIncrementPackageRevision>
-    <GenerateTestArtifacts>True</GenerateTestArtifacts>
+    <AppxAutoIncrementPackageRevision>false</AppxAutoIncrementPackageRevision>
+    <SelfContained>false</SelfContained>
+    <PublishSelfContained>false</PublishSelfContained>
+    <WindowsAppSDKSelfContained>false</WindowsAppSDKSelfContained>
+    <GenerateTestArtifacts>true</GenerateTestArtifacts>
     <HoursBetweenUpdateChecks>0</HoursBetweenUpdateChecks>
     <EntryPointProjectUniqueName>..\Main\Cube.Psa.Minimal.Main.csproj</EntryPointProjectUniqueName>
   </PropertyGroup>

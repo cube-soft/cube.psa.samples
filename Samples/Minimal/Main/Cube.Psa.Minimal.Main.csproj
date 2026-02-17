@@ -13,6 +13,7 @@
         <TargetPlatformVersion>10.0.26100.0</TargetPlatformVersion>
         <Platforms>AnyCPU;x86;x64</Platforms>
         <SelfContained>false</SelfContained>
+        <PublishSelfContained>false</PublishSelfContained>
         <WindowsAppSDKSelfContained>false</WindowsAppSDKSelfContained>
         <EnableDefaultCompileItems>true</EnableDefaultCompileItems>
         <GenerateProgramFile>false</GenerateProgramFile>
