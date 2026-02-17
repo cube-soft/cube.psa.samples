@@ -8,7 +8,9 @@
 		<OutputType>Exe</OutputType>
         <AssemblyName>CubePsaDummy</AssemblyName>
         <RootNamespace>Cube.Psa.Minimal</RootNamespace>
-        <TargetFramework>net8.0</TargetFramework>
+        <TargetFramework>net8.0-windows10.0.26100.0</TargetFramework>
+        <TargetPlatformMinVersion>10.0.26100.0</TargetPlatformMinVersion>
+        <TargetPlatformVersion>10.0.26100.0</TargetPlatformVersion>
         <Platforms>AnyCPU;x86;x64</Platforms>
         <SelfContained>false</SelfContained>
         <WindowsAppSDKSelfContained>false</WindowsAppSDKSelfContained>
@@ -27,4 +29,7 @@
     <PropertyGroup Condition=" '$(Platform)' == 'x64' ">
         <RuntimeIdentifier>win-x64</RuntimeIdentifier>
     </PropertyGroup>
+    <ItemGroup>
+        <ProjectReference Include="..\VirtualPrinter\Cube.Psa.Minimal.VirtualPrinter.csproj" />
+    </ItemGroup>
 </Project>

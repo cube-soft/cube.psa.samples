@@ -15,7 +15,7 @@
 // limitations under the License.
 //
 /* ------------------------------------------------------------------------- */
-namespace Cube.Psa.Minimal;
+namespace Cube.Psa.Minimal.VirtualPrinter;
 
 using System;
 using Windows.ApplicationModel.Background;
