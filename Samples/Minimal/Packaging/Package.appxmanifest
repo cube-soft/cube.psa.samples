@@ -50,12 +50,12 @@
         <printsupport2:Extension Category="windows.printSupportVirtualPrinterWorkflow" EntryPoint="Cube.Psa.Minimal.VirtualPrinter.PsaVirtualPrinterTask">
           <printsupport2:PrintSupportVirtualPrinter
             DisplayName="ms-resource:PrinterName"
-            PrinterUri="cube-psa-minimal:xps-printer"
-            PreferredInputFormat="application/oxps"
-            OutputFileTypes="pdf"
+            PrinterUri="cube-psa-minimal:ps-printer"
+            PreferredInputFormat="application/postscript"
+            OutputFileTypes="ps"
             PdcFile="Assets\Printer.pdc">
             <printsupport2:SupportedFormats>
-              <printsupport2:SupportedFormat Type="application/oxps" />
+              <printsupport2:SupportedFormat Type="application/postscript" />
             </printsupport2:SupportedFormats>
           </printsupport2:PrintSupportVirtualPrinter>
         </printsupport2:Extension>

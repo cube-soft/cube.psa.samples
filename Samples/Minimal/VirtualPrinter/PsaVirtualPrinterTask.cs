@@ -21,6 +21,7 @@ using System;
 using Windows.ApplicationModel.Background;
 using Windows.Graphics.Printing.Workflow;
 using Windows.Storage;
+using Windows.Storage.Streams;
 
 /* ------------------------------------------------------------------------- */
 ///
@@ -63,14 +64,11 @@ public sealed class PsaVirtualPrinterTask : IBackgroundTask
 
             try
             {
-                var src = e.SourceContent;
-                if (src.ContentType != "application/oxps") throw new NotSupportedException("Microsoft only provides conversion from XPS");
-
-                var file = await e.GetTargetFileAsync();
-                var stream = await file.OpenAsync(FileAccessMode.ReadWrite);
-                var converter = e.GetPdlConverter(PrintWorkflowPdlConversionType.XpsToPdf);
-                await converter.ConvertPdlAsync(e.GetJobPrintTicket(), src.GetInputStream(), stream.GetOutputStreamAt(0));
-
+                var dest = await e.GetTargetFileAsync();
+                using (var stream = await dest.OpenAsync(FileAccessMode.ReadWrite))
+                {
+                    await RandomAccessStream.CopyAndCloseAsync(e.SourceContent.GetInputStream(), stream.GetOutputStreamAt(stream.Size));
+                }
                 status = PrintWorkflowSubmittedStatus.Succeeded;
             }
             finally
