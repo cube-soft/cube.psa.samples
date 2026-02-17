@@ -67,6 +67,10 @@ public sealed class PsaVirtualPrinterTask : IBackgroundTask
                 var dest = await e.GetTargetFileAsync();
                 using (var stream = await dest.OpenAsync(FileAccessMode.ReadWrite))
                 {
+                    // This sample implementation does NOT convert PostScript to PDF.
+                    // If PostScript-to-PDF conversion is required, you must integrate
+                    // an appropriate third-party library and implement the conversion
+                    // process separately.
                     await RandomAccessStream.CopyAndCloseAsync(e.SourceContent.GetInputStream(), stream.GetOutputStreamAt(stream.Size));
                 }
                 status = PrintWorkflowSubmittedStatus.Succeeded;
