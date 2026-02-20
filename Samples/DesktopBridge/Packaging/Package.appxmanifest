@@ -11,10 +11,7 @@
   xmlns:rescap="http://schemas.microsoft.com/appx/manifest/foundation/windows10/restrictedcapabilities"
   IgnorableNamespaces="uap uap10 uap12 desktop printsupport printsupport2 rescap">
 
-  <Identity
-    Name="CubePsaDesktopBridge"
-    Publisher="CN=CubeTest"
-    Version="1.0.0.0" />
+  <Identity Name="CubePsaDesktopBridge" Publisher="CN=CubeTest" Version="1.0.0.0" />
 
   <Properties>
     <DisplayName>Cube PSA v4 Virtual Printer with DesktopBridge</DisplayName>
@@ -28,14 +25,11 @@
   </Dependencies>
 
   <Resources>
-    <Resource Language="x-generate"/>
+    <Resource Language="en-US" />
   </Resources>
 
   <Applications>
-    <Application Id="App"
-      Executable="Cube.Psa.DesktopBridge.Main\CubePsaApp.exe"
-      EntryPoint="Windows.FullTrustApplication"
-      uap10:SupportsMultipleInstances="true">
+    <Application Id="App" Executable="Cube.Psa.DesktopBridge.Main\CubePsaApp.exe" EntryPoint="Windows.FullTrustApplication" uap10:SupportsMultipleInstances="true">
       <uap:VisualElements
         DisplayName="Cube PSA v4 Virtual Printer with DesktopBridge"
         Description="Cube PSA v4 Virtual Printer with DesktopBridge"
@@ -47,8 +41,8 @@
       </uap:VisualElements>
 
       <Extensions>
-        <printsupport:Extension  Category="windows.printSupportExtension" EntryPoint="Cube.Psa.DesktopBridge.VirtualPrinter.PsaExtensionTask" />
-        <printsupport2:Extension Category="windows.printSupportVirtualPrinterWorkflow" EntryPoint="Cube.Psa.DesktopBridge.VirtualPrinter.PsaVirtualPrinterTask">
+        <printsupport:Extension  EntryPoint="Cube.Psa.DesktopBridge.VirtualPrinter.PsaExtensionTask" Category="windows.printSupportExtension" />
+        <printsupport2:Extension EntryPoint="Cube.Psa.DesktopBridge.VirtualPrinter.PsaVirtualPrinterTask" Category="windows.printSupportVirtualPrinterWorkflow">
           <printsupport2:PrintSupportVirtualPrinter
             DisplayName="ms-resource:PrinterName"
             PrinterUri="cube-psa-desktop-bridge:ps-printer"
@@ -60,7 +54,7 @@
           </printsupport2:PrintSupportVirtualPrinter>
         </printsupport2:Extension>
 
-        <desktop:Extension Category="windows.fullTrustProcess" Executable="Cube.Psa.DesktopBridge.Main\CubePsaLauncher.exe">
+        <desktop:Extension Executable="Cube.Psa.DesktopBridge.Main\CubePsaLauncher.exe" Category="windows.fullTrustProcess">
           <desktop:FullTrustProcess>
               <desktop:ParameterGroup GroupId="Launcher" Parameters="" />
           </desktop:FullTrustProcess>
