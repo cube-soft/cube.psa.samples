@@ -54,11 +54,11 @@ namespace Cube.Psa.DesktopBridge
             RootPanel.Name = "RootPanel";
             RootPanel.RowCount = 5;
             RootPanel.RowStyles.Add(new RowStyle(SizeType.Absolute, 20F));
-            RootPanel.RowStyles.Add(new RowStyle(SizeType.Absolute, 40F));
+            RootPanel.RowStyles.Add(new RowStyle(SizeType.Absolute, 36F));
             RootPanel.RowStyles.Add(new RowStyle(SizeType.Percent, 100F));
             RootPanel.RowStyles.Add(new RowStyle(SizeType.Absolute, 50F));
             RootPanel.RowStyles.Add(new RowStyle(SizeType.Absolute, 20F));
-            RootPanel.Size = new System.Drawing.Size(784, 141);
+            RootPanel.Size = new System.Drawing.Size(584, 141);
             RootPanel.TabIndex = 0;
             // 
             // DestinationPanel
@@ -73,7 +73,7 @@ namespace Cube.Psa.DesktopBridge
             DestinationPanel.Name = "DestinationPanel";
             DestinationPanel.RowCount = 1;
             DestinationPanel.RowStyles.Add(new RowStyle(SizeType.Percent, 100F));
-            DestinationPanel.Size = new System.Drawing.Size(738, 34);
+            DestinationPanel.Size = new System.Drawing.Size(538, 30);
             DestinationPanel.TabIndex = 0;
             // 
             // DestinationTextBox
@@ -82,15 +82,16 @@ namespace Cube.Psa.DesktopBridge
             DestinationTextBox.Font = new System.Drawing.Font("Yu Gothic UI", 11F);
             DestinationTextBox.Location = new System.Drawing.Point(3, 3);
             DestinationTextBox.Name = "DestinationTextBox";
-            DestinationTextBox.Size = new System.Drawing.Size(652, 27);
+            DestinationTextBox.Size = new System.Drawing.Size(452, 27);
             DestinationTextBox.TabIndex = 0;
             // 
             // DestinationButton
             // 
             DestinationButton.Dock = DockStyle.Fill;
-            DestinationButton.Location = new System.Drawing.Point(661, 3);
+            DestinationButton.Location = new System.Drawing.Point(461, 0);
+            DestinationButton.Margin = new Padding(3, 0, 3, 3);
             DestinationButton.Name = "DestinationButton";
-            DestinationButton.Size = new System.Drawing.Size(74, 28);
+            DestinationButton.Size = new System.Drawing.Size(74, 27);
             DestinationButton.TabIndex = 1;
             DestinationButton.Text = "...";
             DestinationButton.UseVisualStyleBackColor = true;
@@ -102,13 +103,13 @@ namespace Cube.Psa.DesktopBridge
             FooterPanel.FlowDirection = FlowDirection.RightToLeft;
             FooterPanel.Location = new System.Drawing.Point(23, 74);
             FooterPanel.Name = "FooterPanel";
-            FooterPanel.Size = new System.Drawing.Size(738, 44);
+            FooterPanel.Size = new System.Drawing.Size(538, 44);
             FooterPanel.TabIndex = 1;
             // 
-            // button1
+            // SaveButton
             // 
-            SaveButton.Location = new System.Drawing.Point(585, 3);
-            SaveButton.Name = "button1";
+            SaveButton.Location = new System.Drawing.Point(385, 3);
+            SaveButton.Name = "SaveButton";
             SaveButton.Size = new System.Drawing.Size(150, 36);
             SaveButton.TabIndex = 0;
             SaveButton.Text = "Save";
@@ -118,7 +119,7 @@ namespace Cube.Psa.DesktopBridge
             // 
             AutoScaleDimensions = new System.Drawing.SizeF(7F, 15F);
             AutoScaleMode = AutoScaleMode.Font;
-            ClientSize = new System.Drawing.Size(784, 141);
+            ClientSize = new System.Drawing.Size(584, 141);
             Controls.Add(RootPanel);
             Name = "MainForm";
             Text = "Cube PSA v4 Sample App";
