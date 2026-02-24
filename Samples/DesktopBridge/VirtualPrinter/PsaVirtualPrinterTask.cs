@@ -65,7 +65,7 @@ public sealed class PsaVirtualPrinterTask : IBackgroundTask
 
             try
             {
-                var dir = ApplicationData.Current.GetPublisherCacheFolder("incoming");
+                var dir = ApplicationData.Current.GetPublisherCacheFolder("printing");
                 if (dir is null) return;
 
                 var dest = await dir.CreateFileAsync("source.ps", CreationCollisionOption.ReplaceExisting);

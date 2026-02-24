@@ -43,19 +43,23 @@ internal class Program
     /* --------------------------------------------------------------------- */
     static void Main()
     {
-        var dir = ApplicationData.Current.GetPublisherCacheFolder("incoming");
+        var dir = ApplicationData.Current.GetPublisherCacheFolder("printing");
         if (dir is null) return;
 
         var src = Path.Combine(dir.Path, "source.ps");
         if (!File.Exists(src)) return;
 
-        var psi = new ProcessStartInfo
+        try
         {
-            FileName = "CubePsaApp.exe",
-            UseShellExecute = false,
-        };
+            var psi = new ProcessStartInfo
+            {
+                FileName = "CubePsaApp.exe",
+                UseShellExecute = false,
+            };
 
-        psi.ArgumentList.Add(src);
-        Process.Start(psi)?.WaitForExit();
+            psi.ArgumentList.Add(src);
+            Process.Start(psi)?.WaitForExit();
+        }
+        finally { if (File.Exists(src)) File.Delete(src); }
     }
 }

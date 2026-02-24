@@ -75,5 +75,11 @@
         <ActivatableClass ActivatableClassId="Cube.Psa.DesktopBridge.VirtualPrinter.PsaVirtualPrinterTask" ThreadingModel="both" />
       </InProcessServer>
     </Extension>
+
+    <Extension Category="windows.publisherCacheFolders">
+      <PublisherCacheFolders>
+        <Folder Name="printing" />
+      </PublisherCacheFolders>
+    </Extension>
   </Extensions>
 </Package>

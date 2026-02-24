@@ -46,17 +46,10 @@ internal static class Program
     {
         if (args.Length == 0) return;
 
-        try
-        {
-            // To customize application configuration such as set high DPI settings or default font,
-            // see https://aka.ms/applicationconfiguration.
+        // To customize application configuration such as set high DPI settings or default font,
+        // see https://aka.ms/applicationconfiguration.
 
-            ApplicationConfiguration.Initialize();
-            Application.Run(new MainForm(args[0]));
-        }
-        finally
-        {
-            if (Path.Exists(args[0])) File.Delete(args[0]);
-        }
+        ApplicationConfiguration.Initialize();
+        Application.Run(new MainForm(args[0]));
     }
 }
