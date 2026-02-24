@@ -1,11 +1,11 @@
 ﻿<Project Sdk="Microsoft.NET.Sdk">
-	<PropertyGroup>
-		<Version>1.0.0</Version>
-		<Authors>cube-soft</Authors>
-		<Company>CubeSoft</Company>
-		<Description>Sample application that demonstrates the app-side of a virtual printer launched via DesktopBridge</Description>
-		<Copyright>Copyright © 2010 CubeSoft, Inc.</Copyright>
-		<OutputType>WinExe</OutputType>
+  <PropertyGroup>
+    <Version>1.0.0</Version>
+    <Authors>cube-soft</Authors>
+    <Company>CubeSoft</Company>
+    <Description>Sample application that demonstrates the app-side of a virtual printer launched via DesktopBridge</Description>
+    <Copyright>Copyright © 2010 CubeSoft, Inc.</Copyright>
+    <OutputType>WinExe</OutputType>
     <UseWindowsForms>true</UseWindowsForms>
     <AssemblyName>CubePsaApp</AssemblyName>
     <RootNamespace>Cube.Psa.DesktopBridge</RootNamespace>
@@ -21,7 +21,7 @@
     <Nullable>enable</Nullable>
     <ForceDesignerDpiUnaware>true</ForceDesignerDpiUnaware>
     <SatelliteResourceLanguages>_</SatelliteResourceLanguages>
-	</PropertyGroup>
+  </PropertyGroup>
   <PropertyGroup Condition=" '$(Platform)' == 'AnyCPU' ">
     <OutputPath>bin\Any CPU\$(Configuration)\</OutputPath>
     <DocumentationFile>bin\Any CPU\$(Configuration)\$(TargetFramework)\$(AssemblyName).xml</DocumentationFile>

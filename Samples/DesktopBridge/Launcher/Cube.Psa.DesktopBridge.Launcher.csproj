@@ -1,11 +1,11 @@
 ﻿<Project Sdk="Microsoft.NET.Sdk">
-	<PropertyGroup>
-		<Version>1.0.0</Version>
-		<Authors>cube-soft</Authors>
-		<Company>CubeSoft</Company>
-		<Description>DesktopBridge launcher</Description>
-		<Copyright>Copyright © 2010 CubeSoft, Inc.</Copyright>
-		<OutputType>Exe</OutputType>
+  <PropertyGroup>
+    <Version>1.0.0</Version>
+    <Authors>cube-soft</Authors>
+    <Company>CubeSoft</Company>
+    <Description>DesktopBridge launcher</Description>
+    <Copyright>Copyright © 2010 CubeSoft, Inc.</Copyright>
+    <OutputType>Exe</OutputType>
     <AssemblyName>CubePsaLauncher</AssemblyName>
     <RootNamespace>Cube.Psa.DesktopBridge</RootNamespace>
     <TargetFramework>net8.0-windows10.0.26100.0</TargetFramework>
@@ -19,7 +19,7 @@
     <GenerateProgramFile>false</GenerateProgramFile>
     <Nullable>enable</Nullable>
     <SatelliteResourceLanguages>_</SatelliteResourceLanguages>
-	</PropertyGroup>
+  </PropertyGroup>
   <PropertyGroup Condition=" '$(Platform)' == 'AnyCPU' ">
     <OutputPath>bin\Any CPU\$(Configuration)\</OutputPath>
     <DocumentationFile>bin\Any CPU\$(Configuration)\$(TargetFramework)\$(AssemblyName).xml</DocumentationFile>
