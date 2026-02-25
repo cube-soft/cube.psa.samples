@@ -19,6 +19,7 @@ namespace Cube.Psa.DesktopBridge;
 
 using System;
 using System.IO;
+using System.Text;
 using System.Windows.Forms;
 
 /* ------------------------------------------------------------------------- */
@@ -48,14 +49,19 @@ public partial class MainForm : Form
         var desktop = Environment.GetFolderPath(Environment.SpecialFolder.Desktop);
         DestinationTextBox.Text = Path.Combine(desktop, "TestResult.ps");
 
-        SaveButton.Click += (_, _) =>
+        var debug = new StringBuilder()
+            .AppendLine($"https://github.com/cube-soft/cube.psa.samples")
+            .AppendLine($"Source is {src}");
+        DebugTextBox.Text = debug.ToString();
+
+        SaveButton.Click += (_, _) => Hook(() =>
         {
             if (DestinationTextBox.Text.Length == 0) return;
             File.Copy(src, DestinationTextBox.Text, true);
             Close();
-        };
+        }, debug);
 
-        DestinationButton.Click += (_, _) =>
+        DestinationButton.Click += (_, _) => Hook(() =>
         {
             var dialog = new SaveFileDialog
             {
@@ -65,6 +71,30 @@ public partial class MainForm : Form
             };
 
             if (dialog.ShowDialog() == DialogResult.OK) DestinationTextBox.Text = dialog.FileName;
-        };
+        }, debug);
+    }
+
+    /* --------------------------------------------------------------------- */
+    ///
+    /// Hook
+    ///
+    /// <summary>
+    /// Invokes the specified action and catches any exception that occurs.
+    /// If an exception is thrown, the error details are appended to the
+    /// provided debug buffer and displayed in the debug text box.
+    /// </summary>
+    ///
+    /// <param name="action">The action to invoke.</param>
+    /// <param name="debug">Debug buffer.</param>
+    ///
+    /* --------------------------------------------------------------------- */
+    private void Hook(Action action, StringBuilder debug)
+    {
+        try { action(); }
+        catch (Exception err)
+        {
+            debug.AppendLine(err.ToString());
+            DebugTextBox.Text = debug.ToString();
+        }
     }
 }
