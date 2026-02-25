@@ -36,6 +36,7 @@ namespace Cube.Psa.DesktopBridge
             DestinationButton = new Button();
             FooterPanel = new FlowLayoutPanel();
             SaveButton = new Button();
+            DebugTextBox = new TextBox();
             RootPanel.SuspendLayout();
             DestinationPanel.SuspendLayout();
             FooterPanel.SuspendLayout();
@@ -44,54 +45,53 @@ namespace Cube.Psa.DesktopBridge
             // RootPanel
             // 
             RootPanel.ColumnCount = 3;
-            RootPanel.ColumnStyles.Add(new ColumnStyle(SizeType.Absolute, 20F));
+            RootPanel.ColumnStyles.Add(new ColumnStyle(SizeType.Absolute, 16F));
             RootPanel.ColumnStyles.Add(new ColumnStyle(SizeType.Percent, 100F));
-            RootPanel.ColumnStyles.Add(new ColumnStyle(SizeType.Absolute, 20F));
+            RootPanel.ColumnStyles.Add(new ColumnStyle(SizeType.Absolute, 16F));
             RootPanel.Controls.Add(DestinationPanel, 1, 1);
             RootPanel.Controls.Add(FooterPanel, 1, 3);
+            RootPanel.Controls.Add(DebugTextBox, 1, 2);
             RootPanel.Dock = DockStyle.Fill;
             RootPanel.Location = new System.Drawing.Point(0, 0);
             RootPanel.Name = "RootPanel";
             RootPanel.RowCount = 5;
-            RootPanel.RowStyles.Add(new RowStyle(SizeType.Absolute, 20F));
+            RootPanel.RowStyles.Add(new RowStyle(SizeType.Absolute, 12F));
             RootPanel.RowStyles.Add(new RowStyle(SizeType.Absolute, 36F));
             RootPanel.RowStyles.Add(new RowStyle(SizeType.Percent, 100F));
-            RootPanel.RowStyles.Add(new RowStyle(SizeType.Absolute, 50F));
-            RootPanel.RowStyles.Add(new RowStyle(SizeType.Absolute, 20F));
-            RootPanel.Size = new System.Drawing.Size(584, 141);
+            RootPanel.RowStyles.Add(new RowStyle(SizeType.Absolute, 42F));
+            RootPanel.RowStyles.Add(new RowStyle(SizeType.Absolute, 12F));
+            RootPanel.Size = new System.Drawing.Size(484, 261);
             RootPanel.TabIndex = 0;
             // 
             // DestinationPanel
             // 
             DestinationPanel.ColumnCount = 2;
             DestinationPanel.ColumnStyles.Add(new ColumnStyle(SizeType.Percent, 100F));
-            DestinationPanel.ColumnStyles.Add(new ColumnStyle(SizeType.Absolute, 80F));
+            DestinationPanel.ColumnStyles.Add(new ColumnStyle(SizeType.Absolute, 70F));
             DestinationPanel.Controls.Add(DestinationTextBox, 0, 0);
             DestinationPanel.Controls.Add(DestinationButton, 1, 0);
             DestinationPanel.Dock = DockStyle.Fill;
-            DestinationPanel.Location = new System.Drawing.Point(23, 23);
+            DestinationPanel.Location = new System.Drawing.Point(19, 15);
             DestinationPanel.Name = "DestinationPanel";
             DestinationPanel.RowCount = 1;
             DestinationPanel.RowStyles.Add(new RowStyle(SizeType.Percent, 100F));
-            DestinationPanel.Size = new System.Drawing.Size(538, 30);
+            DestinationPanel.Size = new System.Drawing.Size(446, 30);
             DestinationPanel.TabIndex = 0;
             // 
             // DestinationTextBox
             // 
             DestinationTextBox.Dock = DockStyle.Fill;
-            DestinationTextBox.Font = new System.Drawing.Font("Yu Gothic UI", 11F);
             DestinationTextBox.Location = new System.Drawing.Point(3, 3);
             DestinationTextBox.Name = "DestinationTextBox";
-            DestinationTextBox.Size = new System.Drawing.Size(452, 27);
+            DestinationTextBox.Size = new System.Drawing.Size(370, 25);
             DestinationTextBox.TabIndex = 0;
             // 
             // DestinationButton
             // 
             DestinationButton.Dock = DockStyle.Fill;
-            DestinationButton.Location = new System.Drawing.Point(461, 0);
-            DestinationButton.Margin = new Padding(3, 0, 3, 3);
+            DestinationButton.Location = new System.Drawing.Point(379, 3);
             DestinationButton.Name = "DestinationButton";
-            DestinationButton.Size = new System.Drawing.Size(74, 27);
+            DestinationButton.Size = new System.Drawing.Size(64, 24);
             DestinationButton.TabIndex = 1;
             DestinationButton.Text = "...";
             DestinationButton.UseVisualStyleBackColor = true;
@@ -101,29 +101,41 @@ namespace Cube.Psa.DesktopBridge
             FooterPanel.Controls.Add(SaveButton);
             FooterPanel.Dock = DockStyle.Fill;
             FooterPanel.FlowDirection = FlowDirection.RightToLeft;
-            FooterPanel.Location = new System.Drawing.Point(23, 74);
+            FooterPanel.Location = new System.Drawing.Point(19, 210);
             FooterPanel.Name = "FooterPanel";
-            FooterPanel.Size = new System.Drawing.Size(538, 44);
-            FooterPanel.TabIndex = 1;
+            FooterPanel.Size = new System.Drawing.Size(446, 36);
+            FooterPanel.TabIndex = 2;
             // 
             // SaveButton
             // 
-            SaveButton.Location = new System.Drawing.Point(385, 3);
+            SaveButton.Location = new System.Drawing.Point(318, 3);
             SaveButton.Name = "SaveButton";
-            SaveButton.Size = new System.Drawing.Size(150, 36);
+            SaveButton.Size = new System.Drawing.Size(125, 30);
             SaveButton.TabIndex = 0;
             SaveButton.Text = "Save";
             SaveButton.UseVisualStyleBackColor = true;
             // 
+            // DebugTextBox
+            // 
+            DebugTextBox.Dock = DockStyle.Fill;
+            DebugTextBox.Location = new System.Drawing.Point(19, 51);
+            DebugTextBox.Multiline = true;
+            DebugTextBox.Name = "DebugTextBox";
+            DebugTextBox.ScrollBars = ScrollBars.Vertical;
+            DebugTextBox.Size = new System.Drawing.Size(446, 153);
+            DebugTextBox.TabIndex = 1;
+            // 
             // MainForm
             // 
-            AutoScaleDimensions = new System.Drawing.SizeF(7F, 15F);
+            AutoScaleDimensions = new System.Drawing.SizeF(7F, 17F);
             AutoScaleMode = AutoScaleMode.Font;
-            ClientSize = new System.Drawing.Size(584, 141);
+            ClientSize = new System.Drawing.Size(484, 261);
             Controls.Add(RootPanel);
+            Font = new System.Drawing.Font("Yu Gothic UI", 10F);
             Name = "MainForm";
             Text = "Cube PSA v4 Sample App";
             RootPanel.ResumeLayout(false);
+            RootPanel.PerformLayout();
             DestinationPanel.ResumeLayout(false);
             DestinationPanel.PerformLayout();
             FooterPanel.ResumeLayout(false);
@@ -135,8 +147,9 @@ namespace Cube.Psa.DesktopBridge
         private TableLayoutPanel RootPanel;
         private TableLayoutPanel DestinationPanel;
         private FlowLayoutPanel FooterPanel;
-        private TextBox DestinationTextBox;
         private Button DestinationButton;
+        private TextBox DestinationTextBox;
+        private TextBox DebugTextBox;
         private Button SaveButton;
     }
 }
