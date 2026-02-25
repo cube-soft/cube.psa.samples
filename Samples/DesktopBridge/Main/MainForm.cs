@@ -46,13 +46,15 @@ public partial class MainForm : Form
     {
         InitializeComponent();
 
-        var desktop = Environment.GetFolderPath(Environment.SpecialFolder.Desktop);
-        DestinationTextBox.Text = Path.Combine(desktop, "TestResult.ps");
-
         var debug = new StringBuilder()
-            .AppendLine($"https://github.com/cube-soft/cube.psa.samples")
-            .AppendLine($"Source is {src}");
+            .AppendLine("https://github.com/cube-soft/cube.psa.samples")
+            .AppendLine(src);
         DebugTextBox.Text = debug.ToString();
+
+        DestinationTextBox.Text = Path.Combine(
+            Environment.GetFolderPath(Environment.SpecialFolder.Desktop),
+            "TestResult.ps"
+        );
 
         SaveButton.Click += (_, _) => Hook(() =>
         {
@@ -65,9 +67,9 @@ public partial class MainForm : Form
         {
             var dialog = new SaveFileDialog
             {
-                AddExtension    = true,
+                AddExtension = true,
                 OverwritePrompt = true,
-                Filter          = "PostScript files (*.ps)|*.ps;*.PS|All files (*.*)|*.*",
+                Filter = "PostScript files (*.ps)|*.ps;*.PS|All files (*.*)|*.*",
             };
 
             if (dialog.ShowDialog() == DialogResult.OK) DestinationTextBox.Text = dialog.FileName;
