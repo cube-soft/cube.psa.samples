@@ -17,6 +17,7 @@
 /* ------------------------------------------------------------------------- */
 namespace Cube.Psa.DesktopBridge;
 
+using System;
 using System.Diagnostics;
 using System.IO;
 using Windows.Storage;
@@ -46,8 +47,11 @@ internal class Program
         var dir = ApplicationData.Current.GetPublisherCacheFolder("printing");
         if (dir is null) return;
 
-        var src = Path.Combine(dir.Path, "source.ps");
-        if (!File.Exists(src)) return;
+        var raw = Path.Combine(dir.Path, "source.ps");
+        if (!File.Exists(raw)) return;
+
+        var src = Path.Combine(Path.GetTempPath(), Guid.NewGuid().ToString("N"));
+        File.Move(raw, src);
 
         try
         {
@@ -60,6 +64,10 @@ internal class Program
             psi.ArgumentList.Add(src);
             Process.Start(psi)?.WaitForExit();
         }
-        finally { if (File.Exists(src)) File.Delete(src); }
+        finally
+        {
+            if (File.Exists(raw)) File.Delete(raw);
+            if (File.Exists(src)) File.Delete(src);
+        }
     }
 }
