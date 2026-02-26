@@ -3,9 +3,11 @@ PSA v4 Virtual Printer Samples
 
 本プロジェクトは、[Windows 保護印刷モード (WPP: Windows Protected Print Mode)](https://learn.microsoft.com/ja-jp/windows/modern-print/windows-protected-print-mode/windows-protected-print-mode) に対応した仮想プリンターを構築するためのサンプルコードです。
 
-現在は、最小構成である [Minimal](https://github.com/cube-soft/cube.psa.samples/tree/master/Samples/Minimal)、および DesktopBridge 機能を利用した実装である [DesktopBridge](https://github.com/cube-soft/cube.psa.samples/tree/master/Samples/DesktopBridge) の 2 種類を公開しています。尚、どちらもアプリケーション側の処理は、仮想プリンター側から渡された印刷データを指定されたパスに保存するのみとなっています。そのため、実際に使用する際には PDF への変換処理等を別途実装する必要があります。PDF への変換処理については、[CubePDF リポジトリ](https://github.com/cube-soft/cube.pdf) 等も参考になる可能性があります。
+尚、サンプルプログラムは SelfContained の無効化が必須となるため、実行時に .NET 8.0 デスクトップランタイムが必要になります。.NET 8.0 デスクトップランタイムは、下記 URL よりダウンロードして下さい。
 
-また、DesktopBridge 版に関しては、現行バージョンでは最終的な GUI アプリが終了する前に、連続して印刷を行うとデータの整合性がおかしくなりますので、ご注意ください。連続して印刷した際に整合性を保つ実装に関しては、引き続き検討を行っていきます。
+[.NET 8.0 のダウンロード](https://dotnet.microsoft.com/ja-jp/download/dotnet/8.0)
+
+現在は、最小構成である [Minimal](https://github.com/cube-soft/cube.psa.samples/tree/master/Samples/Minimal)、および DesktopBridge 機能を利用した実装である [DesktopBridge](https://github.com/cube-soft/cube.psa.samples/tree/master/Samples/DesktopBridge) の 2 種類を公開しています。尚、どちらもアプリケーション側の処理は、仮想プリンター側から渡された印刷データを指定されたパスに保存するのみとなっています。そのため、実際に使用する際には PDF への変換処理等を別途実装する必要があります。PDF への変換処理については、[CubePDF リポジトリ](https://github.com/cube-soft/cube.pdf) 等も参考になる可能性があります。また、DesktopBridge 版に関しては、現行バージョンでは最終的な GUI アプリが終了する前に、連続して印刷を行うとデータの整合性がおかしくなりますので、ご注意ください。連続して印刷した際に整合性を保つ実装に関しては、引き続き検討を行っていきます。
 
 ## 公開の背景
 
