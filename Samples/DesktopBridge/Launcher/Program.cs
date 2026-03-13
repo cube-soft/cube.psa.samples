@@ -20,6 +20,7 @@ namespace Cube.Psa.DesktopBridge;
 using System;
 using System.Diagnostics;
 using System.IO;
+using System.Text.Json;
 using Windows.Storage;
 
 /* ------------------------------------------------------------------------- */
@@ -50,8 +51,12 @@ internal class Program
         var raw = Path.Combine(dir.Path, "source.ps");
         if (!File.Exists(raw)) return;
 
-        var src = Path.Combine(Path.GetTempPath(), Guid.NewGuid().ToString("N"));
+        var src = Path.Combine(Path.GetTempPath(), $"{Guid.NewGuid()}.ps");
         File.Move(raw, src);
+
+        var lockPath = Path.Combine(dir.Path, "settings.json");
+        _ = JsonSerializer.Deserialize<PrintSettings>(File.ReadAllText(lockPath));
+        File.Delete(lockPath);
 
         try
         {
