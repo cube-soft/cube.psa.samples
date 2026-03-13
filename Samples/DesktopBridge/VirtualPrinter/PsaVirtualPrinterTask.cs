@@ -17,11 +17,7 @@
 /* ------------------------------------------------------------------------- */
 namespace Cube.Psa.DesktopBridge.VirtualPrinter;
 
-using System;
-using System.Diagnostics;
 using System.IO;
-using System.Threading;
-using System.Threading.Tasks;
 using Windows.ApplicationModel;
 using Windows.ApplicationModel.Background;
 using Windows.Graphics.Printing.Workflow;
@@ -66,39 +62,15 @@ public sealed class PsaVirtualPrinterTask : IBackgroundTask
         session.VirtualPrinterDataAvailable += async (_, e) =>
         {
             var status = PrintWorkflowSubmittedStatus.Failed;
-            string? lockPath = null;
-            var lockAcquired = false;
+            PrintJobLock? jobLock = null;
 
             try
             {
                 var dir = ApplicationData.Current.GetPublisherCacheFolder("printing");
                 if (dir is null) return;
 
-                lockPath = Path.Combine(dir.Path, "settings.json");
-
-                var released = new TaskCompletionSource<bool>(TaskCreationOptions.RunContinuationsAsynchronously);
-                using var watcher = new FileSystemWatcher(dir.Path, "settings.json")
-                {
-                    NotifyFilter = NotifyFilters.FileName,
-                    EnableRaisingEvents = true,
-                };
-                watcher.Deleted += (_, _) => released.TrySetResult(true);
-
-                if (File.Exists(lockPath))
-                {
-                    using var cts = new CancellationTokenSource(TimeSpan.FromSeconds(30));
-                    try { await released.Task.WaitAsync(cts.Token); }
-                    catch (OperationCanceledException)
-                    {
-                        Debug.WriteLine("[PsaVirtualPrinterTask] Lock timeout; removing stale settings.json.");
-                        try { File.Delete(lockPath); } catch { }
-                    }
-                }
-
-                var tmpPath = lockPath + ".tmp";
-                File.WriteAllText(tmpPath, "{}");
-                File.Move(tmpPath, lockPath, overwrite: true);
-                lockAcquired = true;
+                jobLock = new PrintJobLock(Path.Combine(dir.Path, "settings.json"));
+                await jobLock.AcquireAsync();
 
                 var dest = await dir.CreateFileAsync("source.ps", CreationCollisionOption.ReplaceExisting);
                 if (dest is null) return;
@@ -113,9 +85,9 @@ public sealed class PsaVirtualPrinterTask : IBackgroundTask
             }
             finally
             {
-                if (lockAcquired && status != PrintWorkflowSubmittedStatus.Succeeded && lockPath is not null)
+                if (jobLock?.IsAcquired == true && status != PrintWorkflowSubmittedStatus.Succeeded)
                 {
-                    try { File.Delete(lockPath); } catch { }
+                    jobLock.Release();
                 }
                 e.CompleteJob(status);
                 deferral.Complete();
