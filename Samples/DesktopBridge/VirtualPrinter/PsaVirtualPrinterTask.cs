@@ -1,4 +1,4 @@
-﻿﻿/* ------------------------------------------------------------------------- */
+﻿/* ------------------------------------------------------------------------- */
 //
 // Copyright (c) 2010 CubeSoft, Inc.
 //
@@ -17,7 +17,10 @@
 /* ------------------------------------------------------------------------- */
 namespace Cube.Psa.DesktopBridge.VirtualPrinter;
 
+using System;
+using System.Diagnostics;
 using System.IO;
+using System.Threading.Tasks;
 using Windows.ApplicationModel;
 using Windows.ApplicationModel.Background;
 using Windows.Graphics.Printing.Workflow;
@@ -62,38 +65,46 @@ public sealed class PsaVirtualPrinterTask : IBackgroundTask
         session.VirtualPrinterDataAvailable += async (_, e) =>
         {
             var status = PrintWorkflowSubmittedStatus.Failed;
-            PrintJobLock? jobLock = null;
-
-            try
-            {
-                var dir = ApplicationData.Current.GetPublisherCacheFolder("printing");
-                if (dir is null) return;
-
-                jobLock = new PrintJobLock(Path.Combine(dir.Path, "settings.json"));
-                await jobLock.AcquireAsync();
-
-                var dest = await dir.CreateFileAsync("source.ps", CreationCollisionOption.ReplaceExisting);
-                if (dest is null) return;
-
-                using (var stream = await dest.OpenAsync(FileAccessMode.ReadWrite))
-                {
-                    await RandomAccessStream.CopyAndCloseAsync(e.SourceContent.GetInputStream(), stream.GetOutputStreamAt(stream.Size));
-                }
-
-                await FullTrustProcessLauncher.LaunchFullTrustProcessForCurrentAppAsync("Launcher");
-                status = PrintWorkflowSubmittedStatus.Succeeded;
-            }
+            try { status = await ProcessJobAsync(e); }
+            catch (Exception ex) { Debug.WriteLine($"[{nameof(PsaVirtualPrinterTask)}] {ex}"); }
             finally
             {
-                if (jobLock?.IsAcquired == true && status != PrintWorkflowSubmittedStatus.Succeeded)
-                {
-                    jobLock.Release();
-                }
                 e.CompleteJob(status);
                 deferral.Complete();
             }
         };
 
         session.Start();
+    }
+
+    /* --------------------------------------------------------------------- */
+
+    private static async Task<PrintWorkflowSubmittedStatus> ProcessJobAsync(
+        PrintWorkflowVirtualPrinterDataAvailableEventArgs e)
+    {
+        var dir = ApplicationData.Current.GetPublisherCacheFolder("printing");
+        if (dir is null) return PrintWorkflowSubmittedStatus.Failed;
+
+        using var jobLock = await AcquireLockAsync(dir);
+
+        var dest = await dir.CreateFileAsync("source.ps", CreationCollisionOption.ReplaceExisting);
+        if (dest is null) return PrintWorkflowSubmittedStatus.Failed;
+
+        using var stream = await dest.OpenAsync(FileAccessMode.ReadWrite);
+        await RandomAccessStream.CopyAndCloseAsync(
+            e.SourceContent.GetInputStream(),
+            stream.GetOutputStreamAt(stream.Size));
+
+        await FullTrustProcessLauncher.LaunchFullTrustProcessForCurrentAppAsync("Launcher");
+
+        jobLock.Complete();
+        return PrintWorkflowSubmittedStatus.Succeeded;
+    }
+
+    private static async Task<PrintJobLock> AcquireLockAsync(StorageFolder dir)
+    {
+        var jobLock = new PrintJobLock(Path.Combine(dir.Path, "settings.json"));
+        await jobLock.AcquireAsync();
+        return jobLock;
     }
 }

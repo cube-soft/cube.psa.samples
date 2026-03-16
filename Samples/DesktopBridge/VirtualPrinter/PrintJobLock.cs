@@ -1,4 +1,4 @@
-﻿﻿/* ------------------------------------------------------------------------- */
+﻿/* ------------------------------------------------------------------------- */
 //
 // Copyright (c) 2010 CubeSoft, Inc.
 //
@@ -17,6 +17,7 @@
 /* ------------------------------------------------------------------------- */
 namespace Cube.Psa.DesktopBridge.VirtualPrinter;
 
+using System;
 using System.Diagnostics;
 using System.IO;
 using System.Threading;
@@ -30,10 +31,14 @@ using System.Threading.Tasks;
 /// Manages exclusive access between the virtual printer and the launcher
 /// via a lock file (settings.json). The lock is acquired atomically by
 /// writing the file and released by deleting it.
+///
+/// Implements <see cref="IDisposable"/>: Dispose releases the lock if
+/// still held. Call <see cref="Complete"/> on success to transfer
+/// ownership to the launcher without deleting the lock file.
 /// </summary>
 ///
 /* ------------------------------------------------------------------------- */
-internal sealed class PrintJobLock(string path)
+internal sealed class PrintJobLock(string path) : IDisposable
 {
     /* --------------------------------------------------------------------- */
     ///
@@ -69,18 +74,45 @@ internal sealed class PrintJobLock(string path)
 
     /* --------------------------------------------------------------------- */
     ///
+    /// Complete
+    ///
+    /// <summary>
+    /// Transfers lock ownership to the launcher without releasing the
+    /// lock file. Call this on success so that <see cref="Dispose"/>
+    /// does not delete the lock file.
+    /// </summary>
+    ///
+    /* --------------------------------------------------------------------- */
+    public void Complete() => IsAcquired = false;
+
+    /* --------------------------------------------------------------------- */
+    ///
     /// Release
     ///
     /// <summary>
     /// Releases the lock by deleting the lock file.
+    /// Does nothing if the lock is not currently held.
     /// </summary>
     ///
     /* --------------------------------------------------------------------- */
     public void Release()
     {
+        if (!IsAcquired) return;
         try { File.Delete(path); } catch { }
         IsAcquired = false;
     }
+
+    /* --------------------------------------------------------------------- */
+    ///
+    /// Dispose
+    ///
+    /// <summary>
+    /// Releases the lock if still held. Equivalent to
+    /// <see cref="Release"/>.
+    /// </summary>
+    ///
+    /* --------------------------------------------------------------------- */
+    public void Dispose() => Release();
 
     /* --------------------------------------------------------------------- */
 
