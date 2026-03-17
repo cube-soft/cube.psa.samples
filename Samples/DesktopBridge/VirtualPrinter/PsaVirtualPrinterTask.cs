@@ -18,7 +18,6 @@
 namespace Cube.Psa.DesktopBridge.VirtualPrinter;
 
 using System;
-using System.Diagnostics;
 using System.IO;
 using System.Threading.Tasks;
 using Windows.ApplicationModel;
@@ -66,7 +65,6 @@ public sealed class PsaVirtualPrinterTask : IBackgroundTask
         {
             var status = PrintWorkflowSubmittedStatus.Failed;
             try { status = await ProcessJobAsync(e); }
-            catch (Exception ex) { Debug.WriteLine($"[{nameof(PsaVirtualPrinterTask)}] {ex}"); }
             finally
             {
                 e.CompleteJob(status);
@@ -78,33 +76,42 @@ public sealed class PsaVirtualPrinterTask : IBackgroundTask
     }
 
     /* --------------------------------------------------------------------- */
-
-    private static async Task<PrintWorkflowSubmittedStatus> ProcessJobAsync(
-        PrintWorkflowVirtualPrinterDataAvailableEventArgs e)
+    ///
+    /// ProcessJobAsync
+    ///
+    /// <summary>
+    /// Writes the incoming print data to the shared publisher cache and
+    /// launches the full-trust launcher process to handle conversion.
+    /// </summary>
+    ///
+    /// <param name="e">
+    /// Event arguments providing access to the incoming XPS content.
+    /// </param>
+    ///
+    /// <returns>
+    /// <see cref="PrintWorkflowSubmittedStatus.Succeeded"/> on success;
+    /// <see cref="PrintWorkflowSubmittedStatus.Failed"/> otherwise.
+    /// </returns>
+    ///
+    /* --------------------------------------------------------------------- */
+    private static async Task<PrintWorkflowSubmittedStatus> ProcessJobAsync(PrintWorkflowVirtualPrinterDataAvailableEventArgs e)
     {
         var dir = ApplicationData.Current.GetPublisherCacheFolder("printing");
         if (dir is null) return PrintWorkflowSubmittedStatus.Failed;
 
-        using var jobLock = await AcquireLockAsync(dir);
+        using var jobLock = new CriticalSection(Path.Combine(dir.Path, "settings.json"));
+        var succeeded = await jobLock.InvokeAsync(async () =>
+        {
+            var dest = await dir.CreateFileAsync("source.ps", CreationCollisionOption.ReplaceExisting);
+            if (dest is null) return false;
 
-        var dest = await dir.CreateFileAsync("source.ps", CreationCollisionOption.ReplaceExisting);
-        if (dest is null) return PrintWorkflowSubmittedStatus.Failed;
+            using var stream = await dest.OpenAsync(FileAccessMode.ReadWrite);
+            await RandomAccessStream.CopyAndCloseAsync(e.SourceContent.GetInputStream(), stream.GetOutputStreamAt(stream.Size));
 
-        using var stream = await dest.OpenAsync(FileAccessMode.ReadWrite);
-        await RandomAccessStream.CopyAndCloseAsync(
-            e.SourceContent.GetInputStream(),
-            stream.GetOutputStreamAt(stream.Size));
+            return true;
+        });
 
-        await FullTrustProcessLauncher.LaunchFullTrustProcessForCurrentAppAsync("Launcher");
-
-        jobLock.Complete();
-        return PrintWorkflowSubmittedStatus.Succeeded;
-    }
-
-    private static async Task<PrintJobLock> AcquireLockAsync(StorageFolder dir)
-    {
-        var jobLock = new PrintJobLock(Path.Combine(dir.Path, "settings.json"));
-        await jobLock.AcquireAsync();
-        return jobLock;
+        if (succeeded) await FullTrustProcessLauncher.LaunchFullTrustProcessForCurrentAppAsync("Launcher");
+        return succeeded ? PrintWorkflowSubmittedStatus.Succeeded : PrintWorkflowSubmittedStatus.Failed;
     }
 }
