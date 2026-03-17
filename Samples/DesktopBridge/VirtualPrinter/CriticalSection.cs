@@ -32,12 +32,18 @@ using System.Threading.Tasks;
 /// writing the file and released by deleting it.
 ///
 /// <see cref="InvokeAsync"/> may be called multiple times on the same
-/// instance. When the lock is not yet held, it is acquired first; when
-/// the lock is already held (e.g. a previous action returned false),
-/// the action is executed directly without re-acquiring. On success
-/// (action returns true), ownership of the lock file is transferred to
-/// the launcher. On failure (false or exception), the lock remains held
-/// and Dispose will delete it.
+/// instance. Internal state determines whether lock acquisition is
+/// needed:
+/// <list type="bullet">
+///   <item><see cref="LockState.Idle"/> or <see cref="LockState.Succeeded"/>:
+///   acquire the lock before executing the action.</item>
+///   <item><see cref="LockState.Acquired"/>: the lock is already held
+///   (previous action failed); execute the action without re-acquiring.
+///   </item>
+/// </list>
+/// Dispose deletes the lock file only when the state is
+/// <see cref="LockState.Acquired"/> (i.e. an action failed and the
+/// lock was never transferred to the launcher).
 /// </summary>
 ///
 /* ------------------------------------------------------------------------- */
@@ -50,14 +56,12 @@ internal sealed class CriticalSection(string src) : IDisposable
     /// InvokeAsync
     ///
     /// <summary>
-    /// Executes <paramref name="action"/> under the lock. If the lock is
-    /// not yet held, it is acquired first by atomically creating the lock
-    /// file (waiting up to 30 seconds for any existing lock to be
-    /// released). If the lock is already held, the action is executed
-    /// directly without re-acquiring.
-    /// Returns true when the action succeeds and ownership has been
-    /// transferred to the launcher; false when it fails and the lock is
-    /// still held by this instance.
+    /// Executes <paramref name="action"/> under the lock. Acquires the
+    /// lock first unless it is already held from a previous failed
+    /// action. Returns true on success, at which point ownership of the
+    /// lock file is transferred to the launcher. Returns false on
+    /// failure; the lock remains held so the action can be retried
+    /// without re-acquiring.
     /// </summary>
     ///
     /// <exception cref="ObjectDisposedException">
@@ -69,10 +73,10 @@ internal sealed class CriticalSection(string src) : IDisposable
     {
         ObjectDisposedException.ThrowIf(_disposed, this);
 
-        if (!_locked) await AcquireAsync();
+        if (_state != LockState.Acquired) await AcquireAsync();
 
         var succeeded = await action();
-        if (succeeded) _locked = false;
+        _state = succeeded ? LockState.Succeeded : LockState.Acquired;
 
         return succeeded;
     }
@@ -82,7 +86,8 @@ internal sealed class CriticalSection(string src) : IDisposable
     /// Dispose
     ///
     /// <summary>
-    /// Releases the lock if still held.
+    /// Releases the lock if still held (i.e. an action failed and the
+    /// lock was never transferred to the launcher).
     /// </summary>
     ///
     /* --------------------------------------------------------------------- */
@@ -123,7 +128,7 @@ internal sealed class CriticalSection(string src) : IDisposable
         File.WriteAllText(tmp, "{}");
         await WaitAsync();
         File.Move(tmp, src, overwrite: true);
-        _locked = true;
+        _state = LockState.Acquired;
     }
 
     /* --------------------------------------------------------------------- */
@@ -131,7 +136,9 @@ internal sealed class CriticalSection(string src) : IDisposable
     /// Dispose
     ///
     /// <summary>
-    /// Releases the lock if still held. When called from the finalizer,
+    /// Deletes the lock file if the state is
+    /// <see cref="LockState.Acquired"/> (action failed; lock not
+    /// transferred). When called from the finalizer,
     /// <paramref name="disposing"/> is false and only unmanaged resources
     /// are released; managed resources are released when true.
     /// </summary>
@@ -146,9 +153,8 @@ internal sealed class CriticalSection(string src) : IDisposable
     {
         if (_disposed) return;
         _disposed = true;
-        if (!_locked) return;
+        if (_state != LockState.Acquired) return;
         try { File.Delete(src); } catch { }
-        _locked = false;
     }
 
     /* --------------------------------------------------------------------- */
@@ -184,8 +190,17 @@ internal sealed class CriticalSection(string src) : IDisposable
 
     #endregion
 
+    #region Types
+    private enum LockState
+    {
+        Idle,      // Lock not yet acquired; AcquireAsync will run on next InvokeAsync
+        Acquired,  // Lock held; action failed — Dispose will delete the lock file
+        Succeeded, // Action succeeded; ownership transferred to launcher — Dispose is a no-op
+    }
+    #endregion
+
     #region Fields
     private bool _disposed;
-    private bool _locked;
+    private LockState _state;
     #endregion
 }
