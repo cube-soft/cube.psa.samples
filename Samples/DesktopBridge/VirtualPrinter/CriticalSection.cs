@@ -1,4 +1,4 @@
-﻿/* ------------------------------------------------------------------------- */
+/* ------------------------------------------------------------------------- */
 //
 // Copyright (c) 2010 CubeSoft, Inc.
 //
@@ -24,6 +24,32 @@ using System.Threading.Tasks;
 
 /* ------------------------------------------------------------------------- */
 ///
+/// LockStatus
+///
+/// <summary>
+/// Represents the outcome of an action invoked inside a
+/// <see cref="CriticalSection"/>, and determines how the lock file is
+/// handled after the action completes.
+/// </summary>
+///
+/* ------------------------------------------------------------------------- */
+internal enum LockStatus
+{
+    /// <summary>
+    /// The action succeeded. Ownership of the lock file is transferred
+    /// to the launcher; Dispose will not delete it.
+    /// </summary>
+    Succeeded,
+
+    /// <summary>
+    /// The action failed. The lock file remains held by this instance
+    /// and will be deleted when Dispose is called.
+    /// </summary>
+    Failed,
+}
+
+/* ------------------------------------------------------------------------- */
+///
 /// CriticalSection
 ///
 /// <summary>
@@ -34,7 +60,11 @@ using System.Threading.Tasks;
 /// Use <see cref="InvokeAsync"/> to acquire the lock, execute an action,
 /// and automatically transfer ownership to the launcher on success.
 /// Implements <see cref="IDisposable"/>: Dispose deletes the lock file
-/// if still held (i.e., the action failed or threw).
+/// if still held (i.e., the action returned <see cref="LockStatus.Failed"/>
+/// or threw an exception).
+///
+/// <see cref="InvokeAsync"/> may be called multiple times on the same
+/// instance as long as Dispose has not been called.
 /// </summary>
 ///
 /* ------------------------------------------------------------------------- */
@@ -50,14 +80,22 @@ internal sealed class CriticalSection(string src) : IDisposable
     /// Waits until the lock file is absent, atomically creates it, then
     /// invokes <paramref name="action"/>. If the wait exceeds 30 seconds,
     /// the stale lock file is forcibly removed before proceeding.
-    /// On success (<paramref name="action"/> returns true), ownership of
-    /// the lock file is transferred to the launcher and Dispose will not
-    /// delete it. On failure or exception, Dispose deletes the lock file.
+    /// When <paramref name="action"/> returns
+    /// <see cref="LockStatus.Succeeded"/>, ownership of the lock file is
+    /// transferred to the launcher and Dispose will not delete it.
+    /// When it returns <see cref="LockStatus.Failed"/> or throws, the
+    /// lock remains held and Dispose will delete it.
     /// </summary>
     ///
+    /// <exception cref="ObjectDisposedException">
+    /// Thrown if this instance has already been disposed.
+    /// </exception>
+    ///
     /* --------------------------------------------------------------------- */
-    public async Task<bool> InvokeAsync(Func<Task<bool>> action)
+    public async Task<LockStatus> InvokeAsync(Func<Task<LockStatus>> action)
     {
+        ObjectDisposedException.ThrowIf(_disposed, this);
+
         var tmp = $"{src}.{Guid.NewGuid()}";
         File.WriteAllText(tmp, "{}");
 
@@ -65,10 +103,10 @@ internal sealed class CriticalSection(string src) : IDisposable
 
         File.Move(tmp, src, overwrite: true);
         _locked = true;
-        var succeeded = await action();
-        if (succeeded) _locked = false;
+        var status = await action();
+        if (status == LockStatus.Succeeded) _locked = false;
 
-        return succeeded;
+        return status;
     }
 
     /* --------------------------------------------------------------------- */
@@ -120,10 +158,10 @@ internal sealed class CriticalSection(string src) : IDisposable
     private void Dispose(bool disposing)
     {
         if (_disposed) return;
+        _disposed = true;
         if (!_locked) return;
         try { File.Delete(src); } catch { }
         _locked = false;
-        _disposed = true;
     }
 
     /* --------------------------------------------------------------------- */
