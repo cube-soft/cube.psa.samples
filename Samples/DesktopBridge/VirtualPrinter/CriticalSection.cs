@@ -153,8 +153,9 @@ internal sealed class CriticalSection(string src) : IDisposable
     {
         if (_disposed) return;
         _disposed = true;
-        if (_state != LockState.Acquired) return;
-        try { File.Delete(src); } catch { }
+        if (_state == LockState.Acquired)
+            try { File.Delete(src); } catch { }
+        _state = LockState.Idle;
     }
 
     /* --------------------------------------------------------------------- */
