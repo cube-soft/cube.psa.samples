@@ -24,32 +24,6 @@ using System.Threading.Tasks;
 
 /* ------------------------------------------------------------------------- */
 ///
-/// LockStatus
-///
-/// <summary>
-/// Represents the outcome of an action invoked inside a
-/// <see cref="CriticalSection"/>, and determines how the lock file is
-/// handled after the action completes.
-/// </summary>
-///
-/* ------------------------------------------------------------------------- */
-internal enum LockStatus
-{
-    /// <summary>
-    /// The action succeeded. Ownership of the lock file is transferred
-    /// to the launcher; Dispose will not delete it.
-    /// </summary>
-    Succeeded,
-
-    /// <summary>
-    /// The action failed. The lock file remains held by this instance
-    /// and will be deleted when Dispose is called.
-    /// </summary>
-    Failed,
-}
-
-/* ------------------------------------------------------------------------- */
-///
 /// CriticalSection
 ///
 /// <summary>
@@ -57,14 +31,13 @@ internal enum LockStatus
 /// via a lock file (settings.json). The lock is acquired atomically by
 /// writing the file and released by deleting it.
 ///
-/// Use <see cref="InvokeAsync"/> to acquire the lock, execute an action,
-/// and automatically transfer ownership to the launcher on success.
-/// Implements <see cref="IDisposable"/>: Dispose deletes the lock file
-/// if still held (i.e., the action returned <see cref="LockStatus.Failed"/>
-/// or threw an exception).
-///
 /// <see cref="InvokeAsync"/> may be called multiple times on the same
-/// instance as long as Dispose has not been called.
+/// instance. When the lock is not yet held, it is acquired first; when
+/// the lock is already held (e.g. a previous action returned false),
+/// the action is executed directly without re-acquiring. On success
+/// (action returns true), ownership of the lock file is transferred to
+/// the launcher. On failure (false or exception), the lock remains held
+/// and Dispose will delete it.
 /// </summary>
 ///
 /* ------------------------------------------------------------------------- */
@@ -77,14 +50,14 @@ internal sealed class CriticalSection(string src) : IDisposable
     /// InvokeAsync
     ///
     /// <summary>
-    /// Waits until the lock file is absent, atomically creates it, then
-    /// invokes <paramref name="action"/>. If the wait exceeds 30 seconds,
-    /// the stale lock file is forcibly removed before proceeding.
-    /// When <paramref name="action"/> returns
-    /// <see cref="LockStatus.Succeeded"/>, ownership of the lock file is
-    /// transferred to the launcher and Dispose will not delete it.
-    /// When it returns <see cref="LockStatus.Failed"/> or throws, the
-    /// lock remains held and Dispose will delete it.
+    /// Executes <paramref name="action"/> under the lock. If the lock is
+    /// not yet held, it is acquired first by atomically creating the lock
+    /// file (waiting up to 30 seconds for any existing lock to be
+    /// released). If the lock is already held, the action is executed
+    /// directly without re-acquiring.
+    /// Returns true when the action succeeds and ownership has been
+    /// transferred to the launcher; false when it fails and the lock is
+    /// still held by this instance.
     /// </summary>
     ///
     /// <exception cref="ObjectDisposedException">
@@ -92,21 +65,16 @@ internal sealed class CriticalSection(string src) : IDisposable
     /// </exception>
     ///
     /* --------------------------------------------------------------------- */
-    public async Task<LockStatus> InvokeAsync(Func<Task<LockStatus>> action)
+    public async Task<bool> InvokeAsync(Func<Task<bool>> action)
     {
         ObjectDisposedException.ThrowIf(_disposed, this);
 
-        var tmp = $"{src}.{Guid.NewGuid()}";
-        File.WriteAllText(tmp, "{}");
+        if (!_locked) await AcquireAsync();
 
-        await WaitAsync();
+        var succeeded = await action();
+        if (succeeded) _locked = false;
 
-        File.Move(tmp, src, overwrite: true);
-        _locked = true;
-        var status = await action();
-        if (status == LockStatus.Succeeded) _locked = false;
-
-        return status;
+        return succeeded;
     }
 
     /* --------------------------------------------------------------------- */
@@ -138,6 +106,25 @@ internal sealed class CriticalSection(string src) : IDisposable
     #endregion
 
     #region Implementations
+
+    /* --------------------------------------------------------------------- */
+    ///
+    /// AcquireAsync
+    ///
+    /// <summary>
+    /// Waits for any existing lock file to be deleted, then atomically
+    /// creates the lock file by writing a temporary file and renaming it.
+    /// </summary>
+    ///
+    /* --------------------------------------------------------------------- */
+    private async Task AcquireAsync()
+    {
+        var tmp = $"{src}.{Guid.NewGuid()}";
+        File.WriteAllText(tmp, "{}");
+        await WaitAsync();
+        File.Move(tmp, src, overwrite: true);
+        _locked = true;
+    }
 
     /* --------------------------------------------------------------------- */
     ///

@@ -100,18 +100,18 @@ public sealed class PsaVirtualPrinterTask : IBackgroundTask
         if (dir is null) return PrintWorkflowSubmittedStatus.Failed;
 
         using var jobLock = new CriticalSection(Path.Combine(dir.Path, "settings.json"));
-        var result = await jobLock.InvokeAsync(async () =>
+        var succeeded = await jobLock.InvokeAsync(async () =>
         {
             var dest = await dir.CreateFileAsync("source.ps", CreationCollisionOption.ReplaceExisting);
-            if (dest is null) return LockStatus.Failed;
+            if (dest is null) return false;
 
             using var stream = await dest.OpenAsync(FileAccessMode.ReadWrite);
             await RandomAccessStream.CopyAndCloseAsync(e.SourceContent.GetInputStream(), stream.GetOutputStreamAt(stream.Size));
 
-            return LockStatus.Succeeded;
+            return true;
         });
 
-        if (result != LockStatus.Succeeded) return PrintWorkflowSubmittedStatus.Failed;
+        if (!succeeded) return PrintWorkflowSubmittedStatus.Failed;
         await FullTrustProcessLauncher.LaunchFullTrustProcessForCurrentAppAsync("Launcher");
         return PrintWorkflowSubmittedStatus.Succeeded;
     }
