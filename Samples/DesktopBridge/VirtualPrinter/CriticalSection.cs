@@ -30,7 +30,8 @@ using System.Threading.Tasks;
 /// Manages exclusive access between the virtual printer and the launcher
 /// via a lock file (settings.json). The lock is acquired atomically by
 /// writing the file and released by deleting it.
-///
+/// </summary>
+/// <remarks>
 /// <see cref="InvokeAsync"/> may be called multiple times on the same
 /// instance. Internal state determines whether lock acquisition is
 /// needed:
@@ -44,7 +45,7 @@ using System.Threading.Tasks;
 /// Dispose deletes the lock file only when the state is
 /// <see cref="LockState.Acquired"/> (i.e. an action failed and the
 /// lock was never transferred to the launcher).
-/// </summary>
+/// </remarks>
 ///
 /* ------------------------------------------------------------------------- */
 internal sealed class CriticalSection(string src) : IDisposable
@@ -56,13 +57,15 @@ internal sealed class CriticalSection(string src) : IDisposable
     /// InvokeAsync
     ///
     /// <summary>
-    /// Executes <paramref name="action"/> under the lock. Acquires the
-    /// lock first unless it is already held from a previous failed
-    /// action. Returns true on success, at which point ownership of the
-    /// lock file is transferred to the launcher. Returns false on
-    /// failure; the lock remains held so the action can be retried
-    /// without re-acquiring.
+    /// Executes <paramref name="action"/> under the lock. Returns true
+    /// on success, at which point ownership of the lock file is
+    /// transferred to the launcher. Returns false on failure; the lock
+    /// remains held so the action can be retried without re-acquiring.
     /// </summary>
+    /// <remarks>
+    /// Acquires the lock first unless it is already held from a previous
+    /// failed action.
+    /// </remarks>
     ///
     /// <exception cref="ObjectDisposedException">
     /// Thrown if this instance has already been disposed.
@@ -86,9 +89,12 @@ internal sealed class CriticalSection(string src) : IDisposable
     /// Dispose
     ///
     /// <summary>
-    /// Releases the lock if still held (i.e. an action failed and the
-    /// lock was never transferred to the launcher).
+    /// Releases the lock if still held.
     /// </summary>
+    /// <remarks>
+    /// The lock file is deleted only when an action previously failed and
+    /// ownership was never transferred to the launcher.
+    /// </remarks>
     ///
     /* --------------------------------------------------------------------- */
     public void Dispose()
@@ -136,12 +142,15 @@ internal sealed class CriticalSection(string src) : IDisposable
     /// Dispose
     ///
     /// <summary>
-    /// Deletes the lock file if the state is
-    /// <see cref="LockState.Acquired"/> (action failed; lock not
-    /// transferred). When called from the finalizer,
+    /// Releases the lock if still held. When called from the finalizer,
     /// <paramref name="disposing"/> is false and only unmanaged resources
     /// are released; managed resources are released when true.
     /// </summary>
+    /// <remarks>
+    /// Deletes the lock file only when the internal state is
+    /// <see cref="LockState.Acquired"/> (action failed; lock not
+    /// transferred to the launcher).
+    /// </remarks>
     ///
     /// <param name="disposing">
     /// true if called from <see cref="Dispose()"/>; false if called from
