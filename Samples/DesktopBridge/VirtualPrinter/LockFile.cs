@@ -156,7 +156,7 @@ internal sealed class LockFile(string path) : IDisposable
     /* --------------------------------------------------------------------- */
     private async Task<LockFileState> CreateAsync(LockFileState state)
     {
-        if (state == LockFileState.Pending || state == LockFileState.Locked) return state;
+        if (IsLocked(state)) return state;
 
         var tmp = $"{path}.{Guid.NewGuid()}";
         File.WriteAllText(tmp, "{}");
@@ -186,10 +186,32 @@ internal sealed class LockFile(string path) : IDisposable
     {
         if (_disposed) return;
         _disposed = true;
-        if (_state == LockFileState.Pending || _state == LockFileState.Locked)
+        if (IsLocked(_state))
+        {
             try { File.Delete(path); } catch { }
+        }
         _state = LockFileState.Idle;
     }
+
+    /* --------------------------------------------------------------------- */
+    ///
+    /// IsLocked
+    ///
+    /// <summary>
+    /// Determines whether the lock file is currently held by this
+    /// instance and must be deleted on Dispose.
+    /// </summary>
+    /// <remarks>
+    /// Two distinct "half-locked" states exist: <see cref="LockFileState.Pending"/>
+    /// (lock acquired but action failed) and <see cref="LockFileState.Locked"/>
+    /// (lock acquired and action succeeded, but not yet released via
+    /// <see cref="ReleaseAsync"/>). In both cases the lock file is on
+    /// disk and this instance is responsible for cleaning it up.
+    /// </remarks>
+    ///
+    /* --------------------------------------------------------------------- */
+    private bool IsLocked(LockFileState state) =>
+        state == LockFileState.Pending || state == LockFileState.Locked;
 
     /* --------------------------------------------------------------------- */
     ///
