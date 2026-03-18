@@ -52,15 +52,15 @@ internal sealed class LockFile(string path) : IDisposable
     /// LockAsync
     ///
     /// <summary>
-    /// Acquires the lock if not already held, then executes
-    /// <paramref name="action"/>. Returns true on success; false on
-    /// failure. On failure the lock remains held so the action can be
-    /// retried without re-acquiring.
+    /// Acquires the lock if not already held, then executes action.
+    /// Returns true on success; false on failure. On failure the lock
+    /// remains held so the action can be retried without re-acquiring.
     /// </summary>
     ///
     /// <remarks>
     /// Skips acquisition when the lock is already held (HalfLocked or
     /// Locked state). Re-acquires after a completed job (Released state).
+    ///
     /// TODO: Consider whether re-calling after Released should be treated
     /// the same as Idle. To prevent unintended reuse, it may be better to
     /// throw ObjectDisposedException after Released, as after Dispose.
@@ -86,9 +86,8 @@ internal sealed class LockFile(string path) : IDisposable
     /// ReleaseAsync
     ///
     /// <summary>
-    /// Executes <paramref name="action"/> (typically launching the
-    /// full-trust process) and transfers ownership of the lock file to
-    /// the launcher.
+    /// Executes action (typically launching the full-trust process) and
+    /// transfers ownership of the lock file to the launcher.
     /// </summary>
     ///
     /// <exception cref="ObjectDisposedException">
@@ -139,6 +138,33 @@ internal sealed class LockFile(string path) : IDisposable
 
     /* --------------------------------------------------------------------- */
     ///
+    /// Dispose
+    ///
+    /// <summary>
+    /// Deletes the lock file if the job did not complete or was not
+    /// handed off. When called from the finalizer, disposing is false and
+    /// only unmanaged resources are released; managed resources are
+    /// released when true.
+    /// </summary>
+    ///
+    /// <param name="disposing">
+    /// true if called from Dispose method; false if called from the finalizer.
+    /// </param>
+    ///
+    /* --------------------------------------------------------------------- */
+    private void Dispose(bool disposing)
+    {
+        if (_disposed) return;
+        _disposed = true;
+        if (IsLocked(_state))
+        {
+            try { File.Delete(path); } catch { }
+        }
+        _state = LockFileState.Idle;
+    }
+
+    /* --------------------------------------------------------------------- */
+    ///
     /// CreateAsync
     ///
     /// <summary>
@@ -161,53 +187,6 @@ internal sealed class LockFile(string path) : IDisposable
 
     /* --------------------------------------------------------------------- */
     ///
-    /// Dispose
-    ///
-    /// <summary>
-    /// Deletes the lock file if the job did not complete or was not
-    /// handed off. When called from the finalizer,
-    /// <paramref name="disposing"/> is false and only unmanaged resources
-    /// are released; managed resources are released when true.
-    /// </summary>
-    ///
-    /// <param name="disposing">
-    /// true if called from <see cref="Dispose()"/>; false if called from
-    /// the finalizer.
-    /// </param>
-    ///
-    /* --------------------------------------------------------------------- */
-    private void Dispose(bool disposing)
-    {
-        if (_disposed) return;
-        _disposed = true;
-        if (IsLocked(_state))
-        {
-            try { File.Delete(path); } catch { }
-        }
-        _state = LockFileState.Idle;
-    }
-
-    /* --------------------------------------------------------------------- */
-    ///
-    /// IsLocked
-    ///
-    /// <summary>
-    /// Determines whether the lock file is currently held by this
-    /// instance and must be deleted on Dispose.
-    /// </summary>
-    /// <remarks>
-    /// Two distinct half-locked states exist: HalfLocked (lock acquired
-    /// but action failed) and Locked (action succeeded but ReleaseAsync
-    /// not yet called). In both cases the lock file is on disk and this
-    /// instance is responsible for cleaning it up.
-    /// </remarks>
-    ///
-    /* --------------------------------------------------------------------- */
-    private bool IsLocked(LockFileState state) =>
-        state == LockFileState.HalfLocked || state == LockFileState.Locked;
-
-    /* --------------------------------------------------------------------- */
-    ///
     /// WaitAsync
     ///
     /// <summary>
@@ -219,8 +198,11 @@ internal sealed class LockFile(string path) : IDisposable
     /* --------------------------------------------------------------------- */
     private async Task WaitAsync()
     {
+        var dir = Path.GetDirectoryName(path);
+        if (dir is null) return;
+
         var released = new TaskCompletionSource<bool>(TaskCreationOptions.RunContinuationsAsynchronously);
-        using var watcher = new FileSystemWatcher(Path.GetDirectoryName(path)!, Path.GetFileName(path))
+        using var watcher = new FileSystemWatcher(dir, Path.GetFileName(path))
         {
             NotifyFilter = NotifyFilters.FileName,
             EnableRaisingEvents = true,
@@ -237,20 +219,31 @@ internal sealed class LockFile(string path) : IDisposable
         }
     }
 
-    #endregion
+    /* --------------------------------------------------------------------- */
+    ///
+    /// IsLocked
+    ///
+    /// <summary>
+    /// Determines whether the lock file is currently held by this
+    /// instance and must be deleted on Dispose.
+    /// </summary>
+    ///
+    /// <remarks>
+    /// Two distinct half-locked states exist: HalfLocked (lock acquired
+    /// but action failed) and Locked (action succeeded but ReleaseAsync
+    /// not yet called). In both cases the lock file is on disk and this
+    /// instance is responsible for cleaning it up.
+    /// </remarks>
+    ///
+    /* --------------------------------------------------------------------- */
+    private static bool IsLocked(LockFileState state) =>
+        state == LockFileState.HalfLocked || state == LockFileState.Locked;
 
-    #region Internal Types
-    private enum LockFileState
-    {
-        Idle,       // Lock not yet acquired; CreateAsync will run on next LockAsync
-        HalfLocked, // Lock held; action failed — awaiting retry or Dispose
-        Locked,     // Lock held; action succeeded — awaiting ReleaseAsync
-        Released,   // Ownership transferred to launcher via ReleaseAsync — Dispose is a no-op
-    }
     #endregion
 
     #region Fields
-    private bool _disposed;
+    private enum LockFileState { Idle, HalfLocked, Locked, Released }
     private LockFileState _state;
+    private bool _disposed;
     #endregion
 }

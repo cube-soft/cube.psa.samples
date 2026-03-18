@@ -100,7 +100,7 @@ public sealed class PsaVirtualPrinterTask : IBackgroundTask
         if (dir is null) return PrintWorkflowSubmittedStatus.Failed;
 
         using var file = new LockFile(Path.Combine(dir.Path, "settings.json"));
-        var locked = await file.LockAsync(async () =>
+        var created = await file.LockAsync(async () =>
         {
             var dest = await dir.CreateFileAsync("source.ps", CreationCollisionOption.ReplaceExisting);
             if (dest is null) return false;
@@ -111,7 +111,7 @@ public sealed class PsaVirtualPrinterTask : IBackgroundTask
             return true;
         });
 
-        if (locked)
+        if (created)
         {
             await file.ReleaseAsync(async () => await FullTrustProcessLauncher.LaunchFullTrustProcessForCurrentAppAsync("Launcher"));
             return PrintWorkflowSubmittedStatus.Succeeded;
