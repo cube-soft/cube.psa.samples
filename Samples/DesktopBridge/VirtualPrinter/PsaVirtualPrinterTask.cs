@@ -99,7 +99,7 @@ public sealed class PsaVirtualPrinterTask : IBackgroundTask
         var dir = ApplicationData.Current.GetPublisherCacheFolder("printing");
         if (dir is null) return PrintWorkflowSubmittedStatus.Failed;
 
-        using var jobLock = new CriticalSection(Path.Combine(dir.Path, "settings.json"));
+        using var jobLock = new LockFile(Path.Combine(dir.Path, "settings.json"));
         var succeeded = await jobLock.InvokeAsync(async () =>
         {
             var dest = await dir.CreateFileAsync("source.ps", CreationCollisionOption.ReplaceExisting);
