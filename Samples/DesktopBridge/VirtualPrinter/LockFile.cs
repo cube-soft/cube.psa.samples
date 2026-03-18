@@ -33,19 +33,18 @@ using System.Threading.Tasks;
 /// </summary>
 ///
 /// <remarks>
-/// <see cref="InvokeAsync"/> may be called multiple times on the same
-/// instance. Internal state determines whether lock acquisition is
-/// needed:
-/// <list type="bullet">
-///   <item><see cref="LockFileState.Idle"/> or <see cref="LockFileState.Transferred"/>:
-///   acquire the lock before executing the action.</item>
-///   <item><see cref="LockFileState.Pending"/>: the lock is already held
-///   (previous action failed); execute the action without re-acquiring.
-///   </item>
+/// Typical call sequence per job:
+/// <list type="number">
+///   <item><see cref="LockAsync"/>: acquire the lock and write the print
+///   data. Returns true on success (<see cref="LockFileState.Locked"/>),
+///   false on failure (<see cref="LockFileState.Pending"/>).</item>
+///   <item><see cref="ReleaseAsync"/>: launch the full-trust process and
+///   transfer ownership of the lock file to the launcher
+///   (<see cref="LockFileState.Released"/>).</item>
 /// </list>
-/// Dispose deletes the lock file only when the state is
-/// <see cref="LockFileState.Pending"/> (i.e. an action failed and the
-/// lock was never transferred to the launcher).
+/// Dispose deletes the lock file when the state is
+/// <see cref="LockFileState.Pending"/> or <see cref="LockFileState.Locked"/>
+/// (i.e. the job did not complete or was not handed off to the launcher).
 /// </remarks>
 ///
 /* ------------------------------------------------------------------------- */
@@ -55,17 +54,20 @@ internal sealed class LockFile(string path) : IDisposable
 
     /* --------------------------------------------------------------------- */
     ///
-    /// InvokeAsync
+    /// LockAsync
     ///
     /// <summary>
-    /// Executes <paramref name="action"/> under the lock. Returns true
-    /// on success, at which point ownership of the lock file is
-    /// transferred to the launcher. Returns false on failure; the lock
-    /// remains held so the action can be retried without re-acquiring.
+    /// Acquires the lock if not already held, then executes
+    /// <paramref name="action"/>. Returns true on success; false on
+    /// failure. On failure the lock remains held so the action can be
+    /// retried without re-acquiring.
     /// </summary>
+    ///
     /// <remarks>
-    /// Acquires the lock first unless it is already held from a previous
-    /// failed action.
+    /// Skips acquisition when the lock is already held
+    /// (<see cref="LockFileState.Pending"/> or
+    /// <see cref="LockFileState.Locked"/>). Re-acquires after a
+    /// completed job (<see cref="LockFileState.Released"/>).
     /// </remarks>
     ///
     /// <exception cref="ObjectDisposedException">
@@ -73,14 +75,36 @@ internal sealed class LockFile(string path) : IDisposable
     /// </exception>
     ///
     /* --------------------------------------------------------------------- */
-    public async Task<bool> InvokeAsync(Func<Task<bool>> action)
+    public async Task<bool> LockAsync(Func<Task<bool>> action)
     {
         ObjectDisposedException.ThrowIf(_disposed, this);
 
-        _state = await LockAsync();
+        _state = await CreateAsync(_state);
         var done = await action();
-        if (done) _state = LockFileState.Transferred;
+        if (done) _state = LockFileState.Locked;
         return done;
+    }
+
+    /* --------------------------------------------------------------------- */
+    ///
+    /// ReleaseAsync
+    ///
+    /// <summary>
+    /// Executes <paramref name="action"/> (typically launching the
+    /// full-trust process) and transfers ownership of the lock file to
+    /// the launcher.
+    /// </summary>
+    ///
+    /// <exception cref="ObjectDisposedException">
+    /// Thrown if this instance has already been disposed.
+    /// </exception>
+    ///
+    /* --------------------------------------------------------------------- */
+    public async Task ReleaseAsync(Func<Task> action)
+    {
+        ObjectDisposedException.ThrowIf(_disposed, this);
+        await action();
+        _state = LockFileState.Released;
     }
 
     /* --------------------------------------------------------------------- */
@@ -91,8 +115,10 @@ internal sealed class LockFile(string path) : IDisposable
     /// Releases the lock if still held.
     /// </summary>
     /// <remarks>
-    /// The lock file is deleted only when an action previously failed and
-    /// ownership was never transferred to the launcher.
+    /// Deletes the lock file when the state is
+    /// <see cref="LockFileState.Pending"/> or
+    /// <see cref="LockFileState.Locked"/> — i.e. the job did not
+    /// complete or was not handed off to the launcher.
     /// </remarks>
     ///
     /* --------------------------------------------------------------------- */
@@ -119,18 +145,36 @@ internal sealed class LockFile(string path) : IDisposable
 
     /* --------------------------------------------------------------------- */
     ///
+    /// CreateAsync
+    ///
+    /// <summary>
+    /// Waits for any existing lock file to be deleted, then atomically
+    /// creates the lock file by writing a temporary file and renaming it.
+    /// Skips acquisition when the lock is already held.
+    /// </summary>
+    ///
+    /* --------------------------------------------------------------------- */
+    private async Task<LockFileState> CreateAsync(LockFileState state)
+    {
+        if (state == LockFileState.Pending || state == LockFileState.Locked) return state;
+
+        var tmp = $"{path}.{Guid.NewGuid()}";
+        File.WriteAllText(tmp, "{}");
+        await WaitAsync();
+        File.Move(tmp, path, overwrite: true);
+        return LockFileState.Pending;
+    }
+
+    /* --------------------------------------------------------------------- */
+    ///
     /// Dispose
     ///
     /// <summary>
-    /// Releases the lock if still held. When called from the finalizer,
+    /// Deletes the lock file if the job did not complete or was not
+    /// handed off. When called from the finalizer,
     /// <paramref name="disposing"/> is false and only unmanaged resources
     /// are released; managed resources are released when true.
     /// </summary>
-    /// <remarks>
-    /// Deletes the lock file only when the state is
-    /// <see cref="LockFileState.Pending"/> (action failed; ownership
-    /// not yet transferred to the launcher).
-    /// </remarks>
     ///
     /// <param name="disposing">
     /// true if called from <see cref="Dispose()"/>; false if called from
@@ -142,33 +186,9 @@ internal sealed class LockFile(string path) : IDisposable
     {
         if (_disposed) return;
         _disposed = true;
-        if (_state == LockFileState.Pending)
-        {
+        if (_state == LockFileState.Pending || _state == LockFileState.Locked)
             try { File.Delete(path); } catch { }
-        }
         _state = LockFileState.Idle;
-    }
-
-    /* --------------------------------------------------------------------- */
-    ///
-    /// LockAsync
-    ///
-    /// <summary>
-    /// Waits for any existing lock file to be deleted, then atomically
-    /// creates the lock file by writing a temporary file and renaming it.
-    /// </summary>
-    ///
-    /* --------------------------------------------------------------------- */
-    private async Task<LockFileState> LockAsync()
-    {
-        if (_state == LockFileState.Pending) return _state;
-
-        var tmp = $"{path}.{Guid.NewGuid()}";
-        File.WriteAllText(tmp, "{}");
-        await WaitAsync();
-        File.Move(tmp, path, overwrite: true);
-
-        return LockFileState.Pending;
     }
 
     /* --------------------------------------------------------------------- */
@@ -207,9 +227,10 @@ internal sealed class LockFile(string path) : IDisposable
     #region Types
     private enum LockFileState
     {
-        Idle,        // Lock not yet acquired; LockAsync will run on next InvokeAsync
-        Pending,     // Lock held; action failed — Dispose will delete the lock file
-        Transferred, // Ownership transferred to launcher — Dispose is a no-op
+        Idle,     // Lock not yet acquired; CreateAsync will run on next LockAsync
+        Pending,  // Lock held; action failed — Dispose will delete the lock file
+        Locked,   // Lock held; action succeeded — awaiting ReleaseAsync
+        Released, // Ownership transferred to launcher via ReleaseAsync — Dispose is a no-op
     }
     #endregion
 
