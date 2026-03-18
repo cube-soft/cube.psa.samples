@@ -61,9 +61,9 @@ internal sealed class LockFile(string path) : IDisposable
     /// <remarks>
     /// Skips acquisition when the lock is already held (HalfLocked or
     /// Locked state). Re-acquires after a completed job (Released state).
-    /// TODO: Released 後の再呼び出しを Idle と同等に扱ってよいか要検討。
-    /// 意図しない再利用を防ぐため、Released 後は Dispose 後と同様に
-    /// ObjectDisposedException を投げるべきかもしれない。
+    /// TODO: Consider whether re-calling after Released should be treated
+    /// the same as Idle. To prevent unintended reuse, it may be better to
+    /// throw ObjectDisposedException after Released, as after Dispose.
     /// </remarks>
     ///
     /// <exception cref="ObjectDisposedException">
