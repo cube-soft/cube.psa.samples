@@ -37,13 +37,13 @@ using System.Threading.Tasks;
 /// <list type="number">
 ///   <item><see cref="LockAsync"/>: acquire the lock and write the print
 ///   data. Returns true on success (<see cref="LockFileState.Locked"/>),
-///   false on failure (<see cref="LockFileState.Pending"/>).</item>
+///   false on failure (<see cref="LockFileState.HalfLocked"/>).</item>
 ///   <item><see cref="ReleaseAsync"/>: launch the full-trust process and
 ///   transfer ownership of the lock file to the launcher
 ///   (<see cref="LockFileState.Released"/>).</item>
 /// </list>
 /// Dispose deletes the lock file when the state is
-/// <see cref="LockFileState.Pending"/> or <see cref="LockFileState.Locked"/>
+/// <see cref="LockFileState.HalfLocked"/> or <see cref="LockFileState.Locked"/>
 /// (i.e. the job did not complete or was not handed off to the launcher).
 /// </remarks>
 ///
@@ -65,7 +65,7 @@ internal sealed class LockFile(string path) : IDisposable
     ///
     /// <remarks>
     /// Skips acquisition when the lock is already held
-    /// (<see cref="LockFileState.Pending"/> or
+    /// (<see cref="LockFileState.HalfLocked"/> or
     /// <see cref="LockFileState.Locked"/>). Re-acquires after a
     /// completed job (<see cref="LockFileState.Released"/>).
     /// </remarks>
@@ -116,7 +116,7 @@ internal sealed class LockFile(string path) : IDisposable
     /// </summary>
     /// <remarks>
     /// Deletes the lock file when the state is
-    /// <see cref="LockFileState.Pending"/> or
+    /// <see cref="LockFileState.HalfLocked"/> or
     /// <see cref="LockFileState.Locked"/> — i.e. the job did not
     /// complete or was not handed off to the launcher.
     /// </remarks>
@@ -162,7 +162,7 @@ internal sealed class LockFile(string path) : IDisposable
         File.WriteAllText(tmp, "{}");
         await WaitAsync();
         File.Move(tmp, path, overwrite: true);
-        return LockFileState.Pending;
+        return LockFileState.HalfLocked;
     }
 
     /* --------------------------------------------------------------------- */
@@ -202,7 +202,7 @@ internal sealed class LockFile(string path) : IDisposable
     /// instance and must be deleted on Dispose.
     /// </summary>
     /// <remarks>
-    /// Two distinct "half-locked" states exist: <see cref="LockFileState.Pending"/>
+    /// Two distinct "half-locked" states exist: <see cref="LockFileState.HalfLocked"/>
     /// (lock acquired but action failed) and <see cref="LockFileState.Locked"/>
     /// (lock acquired and action succeeded, but not yet released via
     /// <see cref="ReleaseAsync"/>). In both cases the lock file is on
@@ -211,7 +211,7 @@ internal sealed class LockFile(string path) : IDisposable
     ///
     /* --------------------------------------------------------------------- */
     private bool IsLocked(LockFileState state) =>
-        state == LockFileState.Pending || state == LockFileState.Locked;
+        state == LockFileState.HalfLocked || state == LockFileState.Locked;
 
     /* --------------------------------------------------------------------- */
     ///
@@ -250,7 +250,7 @@ internal sealed class LockFile(string path) : IDisposable
     private enum LockFileState
     {
         Idle,     // Lock not yet acquired; CreateAsync will run on next LockAsync
-        Pending,  // Lock held; action failed — Dispose will delete the lock file
+        HalfLocked,  // Lock held; action failed — awaiting retry or Dispose
         Locked,   // Lock held; action succeeded — awaiting ReleaseAsync
         Released, // Ownership transferred to launcher via ReleaseAsync — Dispose is a no-op
     }
