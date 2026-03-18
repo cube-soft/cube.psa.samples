@@ -77,12 +77,10 @@ internal sealed class LockFile(string path) : IDisposable
     {
         ObjectDisposedException.ThrowIf(_disposed, this);
 
-        if (_state != LockFileState.Pending) await AcquireAsync();
-
-        var succeeded = await action();
-        _state = succeeded ? LockFileState.Transferred : LockFileState.Pending;
-
-        return succeeded;
+        _state = await LockAsync();
+        var done = await action();
+        if (done) _state = LockFileState.Transferred;
+        return done;
     }
 
     /* --------------------------------------------------------------------- */
@@ -121,25 +119,6 @@ internal sealed class LockFile(string path) : IDisposable
 
     /* --------------------------------------------------------------------- */
     ///
-    /// AcquireAsync
-    ///
-    /// <summary>
-    /// Waits for any existing lock file to be deleted, then atomically
-    /// creates the lock file by writing a temporary file and renaming it.
-    /// </summary>
-    ///
-    /* --------------------------------------------------------------------- */
-    private async Task AcquireAsync()
-    {
-        var tmp = $"{path}.{Guid.NewGuid()}";
-        File.WriteAllText(tmp, "{}");
-        await WaitAsync();
-        File.Move(tmp, path, overwrite: true);
-        _state = LockFileState.Pending;
-    }
-
-    /* --------------------------------------------------------------------- */
-    ///
     /// Dispose
     ///
     /// <summary>
@@ -168,6 +147,28 @@ internal sealed class LockFile(string path) : IDisposable
             try { File.Delete(path); } catch { }
         }
         _state = LockFileState.Idle;
+    }
+
+    /* --------------------------------------------------------------------- */
+    ///
+    /// LockAsync
+    ///
+    /// <summary>
+    /// Waits for any existing lock file to be deleted, then atomically
+    /// creates the lock file by writing a temporary file and renaming it.
+    /// </summary>
+    ///
+    /* --------------------------------------------------------------------- */
+    private async Task<LockFileState> LockAsync()
+    {
+        if (_state == LockFileState.Pending) return _state;
+
+        var tmp = $"{path}.{Guid.NewGuid()}";
+        File.WriteAllText(tmp, "{}");
+        await WaitAsync();
+        File.Move(tmp, path, overwrite: true);
+
+        return LockFileState.Pending;
     }
 
     /* --------------------------------------------------------------------- */
@@ -206,7 +207,7 @@ internal sealed class LockFile(string path) : IDisposable
     #region Types
     private enum LockFileState
     {
-        Idle,        // Lock not yet acquired; AcquireAsync will run on next InvokeAsync
+        Idle,        // Lock not yet acquired; LockAsync will run on next InvokeAsync
         Pending,     // Lock held; action failed — Dispose will delete the lock file
         Transferred, // Ownership transferred to launcher — Dispose is a no-op
     }
