@@ -34,17 +34,12 @@ using System.Threading.Tasks;
 ///
 /// <remarks>
 /// Typical call sequence per job:
-/// <list type="number">
-///   <item><see cref="LockAsync"/>: acquire the lock and write the print
-///   data. Returns true on success (<see cref="LockFileState.Locked"/>),
-///   false on failure (<see cref="LockFileState.HalfLocked"/>).</item>
-///   <item><see cref="ReleaseAsync"/>: launch the full-trust process and
-///   transfer ownership of the lock file to the launcher
-///   (<see cref="LockFileState.Released"/>).</item>
-/// </list>
-/// Dispose deletes the lock file when the state is
-/// <see cref="LockFileState.HalfLocked"/> or <see cref="LockFileState.Locked"/>
-/// (i.e. the job did not complete or was not handed off to the launcher).
+/// 1. LockAsync  — acquire the lock and write the print data.
+///    Returns true on success, false on failure.
+/// 2. ReleaseAsync — launch the full-trust process and transfer
+///    ownership of the lock file to the launcher.
+/// Dispose deletes the lock file when the job did not complete or
+/// was not handed off to the launcher (HalfLocked or Locked state).
 /// </remarks>
 ///
 /* ------------------------------------------------------------------------- */
@@ -64,10 +59,8 @@ internal sealed class LockFile(string path) : IDisposable
     /// </summary>
     ///
     /// <remarks>
-    /// Skips acquisition when the lock is already held
-    /// (<see cref="LockFileState.HalfLocked"/> or
-    /// <see cref="LockFileState.Locked"/>). Re-acquires after a
-    /// completed job (<see cref="LockFileState.Released"/>).
+    /// Skips acquisition when the lock is already held (HalfLocked or
+    /// Locked state). Re-acquires after a completed job (Released state).
     /// </remarks>
     ///
     /// <exception cref="ObjectDisposedException">
@@ -115,10 +108,8 @@ internal sealed class LockFile(string path) : IDisposable
     /// Releases the lock if still held.
     /// </summary>
     /// <remarks>
-    /// Deletes the lock file when the state is
-    /// <see cref="LockFileState.HalfLocked"/> or
-    /// <see cref="LockFileState.Locked"/> — i.e. the job did not
-    /// complete or was not handed off to the launcher.
+    /// Deletes the lock file when the job did not complete or was not
+    /// handed off to the launcher (HalfLocked or Locked state).
     /// </remarks>
     ///
     /* --------------------------------------------------------------------- */
@@ -202,11 +193,10 @@ internal sealed class LockFile(string path) : IDisposable
     /// instance and must be deleted on Dispose.
     /// </summary>
     /// <remarks>
-    /// Two distinct "half-locked" states exist: <see cref="LockFileState.HalfLocked"/>
-    /// (lock acquired but action failed) and <see cref="LockFileState.Locked"/>
-    /// (lock acquired and action succeeded, but not yet released via
-    /// <see cref="ReleaseAsync"/>). In both cases the lock file is on
-    /// disk and this instance is responsible for cleaning it up.
+    /// Two distinct half-locked states exist: HalfLocked (lock acquired
+    /// but action failed) and Locked (action succeeded but ReleaseAsync
+    /// not yet called). In both cases the lock file is on disk and this
+    /// instance is responsible for cleaning it up.
     /// </remarks>
     ///
     /* --------------------------------------------------------------------- */
