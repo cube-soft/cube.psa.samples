@@ -54,12 +54,12 @@ internal class Program
         var src = Path.Combine(Path.GetTempPath(), $"{Guid.NewGuid()}.dat");
         File.Move(raw, src);
 
-        var lok = Path.Combine(dir.Path, Metadata.FileName);
-        var metadata = await Metadata.LoadAsync(lok);
-        File.Delete(lok);
-
         try
         {
+            var metadata = await Metadata.LoadAsync(Path.Combine(dir.Path, Metadata.FileName));
+            File.Delete(Path.Combine(dir.Path, Metadata.FileName));
+            File.Delete(Path.Combine(dir.Path, Metadata.LockFileName));
+
             var psi = new ProcessStartInfo
             {
                 FileName = "CubePsaApp.exe",
@@ -67,11 +67,21 @@ internal class Program
             };
 
             psi.ArgumentList.Add(src);
+
+            if (metadata is not null)
+            {
+                psi.ArgumentList.Add("-JobTitle");
+                psi.ArgumentList.Add(metadata.JobTitle);
+                psi.ArgumentList.Add("-SessionID");
+                psi.ArgumentList.Add(metadata.SessionId);
+                psi.ArgumentList.Add("-AppName");
+                psi.ArgumentList.Add(metadata.AppName);
+            }
+
             Process.Start(psi)?.WaitForExit();
         }
         finally
         {
-            if (File.Exists(raw)) File.Delete(raw);
             if (File.Exists(src)) File.Delete(src);
         }
     }

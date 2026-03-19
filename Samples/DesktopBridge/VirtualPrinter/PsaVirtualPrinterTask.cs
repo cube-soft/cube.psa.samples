@@ -104,7 +104,7 @@ public sealed class PsaVirtualPrinterTask : IBackgroundTask
             AppName   = e.Configuration.SourceAppDisplayName,
         };
 
-        using var file = new LockFile(Path.Combine(dir.Path, Metadata.FileName));
+        using var file = new LockFile(Path.Combine(dir.Path, Metadata.LockFileName));
         var done = await file.LockAsync(async () =>
         {
             var dest = await dir.CreateFileAsync(Metadata.SourceFileName, CreationCollisionOption.ReplaceExisting);

@@ -131,9 +131,8 @@ public sealed class Metadata
     /// FileName
     ///
     /// <summary>
-    /// The name of the metadata file. Also used as the lock file that
-    /// coordinates exclusive access between the virtual printer and the
-    /// launcher.
+    /// The name of the metadata file written by the virtual printer and
+    /// read by the launcher.
     /// </summary>
     ///
     /* --------------------------------------------------------------------- */
@@ -150,6 +149,18 @@ public sealed class Metadata
     ///
     /* --------------------------------------------------------------------- */
     public const string SourceFileName = "source.dat";
+
+    /* --------------------------------------------------------------------- */
+    ///
+    /// LockFileName
+    ///
+    /// <summary>
+    /// The name of the lock file used to coordinate exclusive access
+    /// between the virtual printer and the launcher.
+    /// </summary>
+    ///
+    /* --------------------------------------------------------------------- */
+    public const string LockFileName = "job.lock";
 
     #endregion
 
