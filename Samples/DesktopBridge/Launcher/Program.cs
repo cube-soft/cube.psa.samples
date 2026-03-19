@@ -78,7 +78,7 @@ internal class Program
                 psi.ArgumentList.Add(metadata.AppName);
             }
 
-            Process.Start(psi)?.WaitForExit();
+            await (Process.Start(psi)?.WaitForExitAsync() ?? Task.CompletedTask);
         }
         finally
         {

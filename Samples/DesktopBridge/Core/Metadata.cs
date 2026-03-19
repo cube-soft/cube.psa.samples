@@ -34,7 +34,7 @@ using System.Threading.Tasks;
 /* ------------------------------------------------------------------------- */
 public sealed class Metadata
 {
-    #region Properteis
+    #region Properties
 
     /* --------------------------------------------------------------------- */
     ///
