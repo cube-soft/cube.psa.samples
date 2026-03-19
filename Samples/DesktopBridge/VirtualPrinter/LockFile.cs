@@ -15,7 +15,7 @@
 // limitations under the License.
 //
 /* ------------------------------------------------------------------------- */
-namespace Cube.Psa.DesktopBridge.VirtualPrinter;
+namespace Cube.Psa.DesktopBridge;
 
 using System;
 using System.IO;

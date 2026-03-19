@@ -45,18 +45,18 @@ internal class Program
     /* --------------------------------------------------------------------- */
     static void Main()
     {
-        var dir = ApplicationData.Current.GetPublisherCacheFolder("printing");
+        var dir = ApplicationData.Current.GetPublisherCacheFolder(Metadata.DirectoryName);
         if (dir is null) return;
 
-        var raw = Path.Combine(dir.Path, "source.ps");
+        var raw = Path.Combine(dir.Path, Metadata.SourceFileName);
         if (!File.Exists(raw)) return;
 
-        var src = Path.Combine(Path.GetTempPath(), $"{Guid.NewGuid()}.ps");
+        var src = Path.Combine(Path.GetTempPath(), $"{Guid.NewGuid()}.dat");
         File.Move(raw, src);
 
-        var lockPath = Path.Combine(dir.Path, "settings.json");
-        _ = JsonSerializer.Deserialize<PrintSettings>(File.ReadAllText(lockPath));
-        File.Delete(lockPath);
+        var lok = Path.Combine(dir.Path, Metadata.FileName);
+        _ = JsonSerializer.Deserialize<Metadata>(File.ReadAllText(lok));
+        File.Delete(lok);
 
         try
         {

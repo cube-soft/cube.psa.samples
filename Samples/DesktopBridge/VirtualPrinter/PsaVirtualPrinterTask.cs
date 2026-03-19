@@ -94,13 +94,13 @@ public sealed class PsaVirtualPrinterTask : IBackgroundTask
     /* --------------------------------------------------------------------- */
     private static async Task<bool> InvokeAsync(PrintWorkflowVirtualPrinterDataAvailableEventArgs e)
     {
-        var dir = ApplicationData.Current.GetPublisherCacheFolder("printing");
+        var dir = ApplicationData.Current.GetPublisherCacheFolder(Metadata.DirectoryName);
         if (dir is null) return false;
 
-        using var file = new LockFile(Path.Combine(dir.Path, "settings.json"));
+        using var file = new LockFile(Path.Combine(dir.Path, Metadata.FileName));
         var done = await file.LockAsync(async () =>
         {
-            var dest = await dir.CreateFileAsync("source.ps", CreationCollisionOption.ReplaceExisting);
+            var dest = await dir.CreateFileAsync(Metadata.SourceFileName, CreationCollisionOption.ReplaceExisting);
             if (dest is null) return false;
 
             using var s = await dest.OpenAsync(FileAccessMode.ReadWrite);
