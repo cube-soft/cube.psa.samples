@@ -46,7 +46,8 @@ public partial class MainForm : Form
     {
         InitializeComponent();
 
-        var debug = new StringBuilder("https://github.com/cube-soft/cube.psa.samples");
+        var debug = new StringBuilder();
+        debug.AppendLine("https://github.com/cube-soft/cube.psa.samples");
         foreach (var e in args) debug.AppendLine(e);
         DebugTextBox.Text = debug.ToString();
 

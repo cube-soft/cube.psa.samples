@@ -34,46 +34,6 @@ using System.Threading.Tasks;
 /* ------------------------------------------------------------------------- */
 public sealed class Metadata
 {
-    #region Methods
-
-    /* --------------------------------------------------------------------- */
-    ///
-    /// LoadAsync
-    ///
-    /// <summary>
-    /// Loads a Metadata instance from the specified JSON file. Returns
-    /// null if the file does not exist or cannot be deserialized.
-    /// </summary>
-    ///
-    /* --------------------------------------------------------------------- */
-    public static async Task<Metadata?> LoadAsync(string path)
-    {
-        if (!File.Exists(path)) return null;
-        try
-        {
-            using var stream = File.OpenRead(path);
-            return await JsonSerializer.DeserializeAsync<Metadata>(stream, _options);
-        }
-        catch { return null; }
-    }
-
-    /* --------------------------------------------------------------------- */
-    ///
-    /// SaveAsync
-    ///
-    /// <summary>
-    /// Saves this instance to the specified path as a JSON file.
-    /// </summary>
-    ///
-    /* --------------------------------------------------------------------- */
-    public async Task SaveAsync(string path)
-    {
-        using var stream = File.Create(path);
-        await JsonSerializer.SerializeAsync(stream, this, _options);
-    }
-
-    #endregion
-
     #region Properteis
 
     /* --------------------------------------------------------------------- */
@@ -164,11 +124,51 @@ public sealed class Metadata
 
     #endregion
 
+    #region Methods
+
+    /* --------------------------------------------------------------------- */
+    ///
+    /// LoadAsync
+    ///
+    /// <summary>
+    /// Loads a Metadata instance from the specified JSON file. Returns
+    /// null if the file does not exist or cannot be deserialized.
+    /// </summary>
+    ///
+    /* --------------------------------------------------------------------- */
+    public static async Task<Metadata?> LoadAsync(string path)
+    {
+        if (!File.Exists(path)) return null;
+        try
+        {
+            using var stream = File.OpenRead(path);
+            return await JsonSerializer.DeserializeAsync<Metadata>(stream, _options);
+        }
+        catch { return null; }
+    }
+
+    /* --------------------------------------------------------------------- */
+    ///
+    /// SaveAsync
+    ///
+    /// <summary>
+    /// Saves this instance to the specified path as a JSON file.
+    /// </summary>
+    ///
+    /* --------------------------------------------------------------------- */
+    public async Task SaveAsync(string path)
+    {
+        using var stream = File.Create(path);
+        await JsonSerializer.SerializeAsync(stream, this, _options);
+    }
+
+    #endregion
+
     #region Fields
     private static readonly JsonSerializerOptions _options = new()
     {
         PropertyNamingPolicy = JsonNamingPolicy.CamelCase,
-        WriteIndented = true,
+        WriteIndented        = true,
     };
     #endregion
 }
