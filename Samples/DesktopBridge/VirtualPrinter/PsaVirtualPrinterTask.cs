@@ -112,8 +112,9 @@ public sealed class PsaVirtualPrinterTask : IBackgroundTask
 
             using var s = await dest.OpenAsync(FileAccessMode.ReadWrite);
             await RandomAccessStream.CopyAndCloseAsync(e.SourceContent.GetInputStream(), s.GetOutputStreamAt(s.Size));
+            await metadata.SaveAsync(Path.Combine(dir.Path, Metadata.FileName));
             return true;
-        }, metadata);
+        });
 
         if (done) await file.ReleaseAsync(LaunchAsync);
         return done;

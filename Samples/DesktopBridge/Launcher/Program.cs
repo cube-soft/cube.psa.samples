@@ -20,7 +20,7 @@ namespace Cube.Psa.DesktopBridge;
 using System;
 using System.Diagnostics;
 using System.IO;
-using System.Text.Json;
+using System.Threading.Tasks;
 using Windows.Storage;
 
 /* ------------------------------------------------------------------------- */
@@ -43,7 +43,7 @@ internal class Program
     /// </summary>
     ///
     /* --------------------------------------------------------------------- */
-    static void Main()
+    static async Task Main()
     {
         var dir = ApplicationData.Current.GetPublisherCacheFolder(Metadata.DirectoryName);
         if (dir is null) return;
@@ -55,7 +55,7 @@ internal class Program
         File.Move(raw, src);
 
         var lok = Path.Combine(dir.Path, Metadata.FileName);
-        _ = JsonSerializer.Deserialize<Metadata>(File.ReadAllText(lok));
+        var metadata = await Metadata.LoadAsync(lok);
         File.Delete(lok);
 
         try
