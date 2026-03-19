@@ -45,7 +45,7 @@ using System.Threading.Tasks;
 /// </remarks>
 ///
 /* ------------------------------------------------------------------------- */
-internal sealed class LockFile(string path) : IDisposable
+public sealed class LockFile(string path) : IDisposable
 {
     #region Methods
 
@@ -61,10 +61,6 @@ internal sealed class LockFile(string path) : IDisposable
     /// The action to execute under the lock, e.g. writing the print data.
     /// </param>
     /// 
-    /// <param name="metadata">
-    /// The metadata for this print job.
-    /// </param>
-    ///
     /// <returns>true on success; false on failure.</returns>
     ///
     /// <remarks>
@@ -77,11 +73,11 @@ internal sealed class LockFile(string path) : IDisposable
     /// </remarks>
     ///
     /* --------------------------------------------------------------------- */
-    public async Task<bool> LockAsync(Func<Task<bool>> action, Metadata metadata)
+    public async Task<bool> LockAsync(Func<Task<bool>> action)
     {
         ObjectDisposedException.ThrowIf(_disposed, this);
 
-        _state = await CreateAsync(metadata, _state);
+        _state = await CreateAsync(_state);
         var done = await action();
         if (done) _state = LockFileState.Locked;
         return done;
@@ -186,12 +182,12 @@ internal sealed class LockFile(string path) : IDisposable
     /// </summary>
     ///
     /* --------------------------------------------------------------------- */
-    private async Task<LockFileState> CreateAsync(Metadata metadata, LockFileState state)
+    private async Task<LockFileState> CreateAsync(LockFileState state)
     {
         if (IsLocked(state)) return state;
 
         var tmp = $"{path}.{Guid.NewGuid()}";
-        File.WriteAllText(tmp, "{}"); // TODO: serialize metadata
+        File.WriteAllText(tmp, "lock");
         await WaitAsync(30);
         File.Move(tmp, path, overwrite: true);
         return LockFileState.HalfLocked;

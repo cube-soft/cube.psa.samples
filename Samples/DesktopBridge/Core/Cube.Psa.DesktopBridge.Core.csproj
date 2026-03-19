@@ -3,10 +3,10 @@
     <Version>1.0.0</Version>
     <Authors>cube-soft</Authors>
     <Company>CubeSoft</Company>
-    <Description>DesktopBridge launcher</Description>
+    <Description>Shared library for v4 Virtual Printer project</Description>
     <Copyright>Copyright © 2010 CubeSoft, Inc.</Copyright>
-    <OutputType>Exe</OutputType>
-    <AssemblyName>CubePsaLauncher</AssemblyName>
+    <OutputType>Library</OutputType>
+    <AssemblyName>Cube.Psa.DesktopBridge</AssemblyName>
     <RootNamespace>Cube.Psa.DesktopBridge</RootNamespace>
     <TargetFramework>net8.0-windows10.0.26100.0</TargetFramework>
     <TargetPlatformMinVersion>10.0.26100.0</TargetPlatformMinVersion>
@@ -30,7 +30,4 @@
   <PropertyGroup Condition=" '$(Platform)' == 'x64' ">
     <RuntimeIdentifier>win-x64</RuntimeIdentifier>
   </PropertyGroup>
-  <ItemGroup>
-    <ProjectReference Include="..\Core\Cube.Psa.DesktopBridge.Core.csproj" />
-  </ItemGroup>
 </Project>

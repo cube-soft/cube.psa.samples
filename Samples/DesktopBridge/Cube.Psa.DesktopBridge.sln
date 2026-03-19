@@ -3,6 +3,8 @@ Microsoft Visual Studio Solution File, Format Version 12.00
 # Visual Studio Version 17
 VisualStudioVersion = 17.14.36930.0
 MinimumVisualStudioVersion = 10.0.40219.1
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Cube.Psa.DesktopBridge.Core", "Core\Cube.Psa.DesktopBridge.Core.csproj", "{71555EEF-8E5B-4E21-A30F-F4859C6670DC}"
+EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Cube.Psa.DesktopBridge.Main", "Main\Cube.Psa.DesktopBridge.Main.csproj", "{5159DA95-280A-468E-AD5F-2B5775018D82}"
 EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Cube.Psa.DesktopBridge.VirtualPrinter", "VirtualPrinter\Cube.Psa.DesktopBridge.VirtualPrinter.csproj", "{195571EB-4AB4-4EF2-B42A-03F7FB87935C}"
@@ -21,6 +23,18 @@ Global
 		Release|x86 = Release|x86
 	EndGlobalSection
 	GlobalSection(ProjectConfigurationPlatforms) = postSolution
+		{71555EEF-8E5B-4E21-A30F-F4859C6670DC}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{71555EEF-8E5B-4E21-A30F-F4859C6670DC}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{71555EEF-8E5B-4E21-A30F-F4859C6670DC}.Debug|x64.ActiveCfg = Debug|x64
+		{71555EEF-8E5B-4E21-A30F-F4859C6670DC}.Debug|x64.Build.0 = Debug|x64
+		{71555EEF-8E5B-4E21-A30F-F4859C6670DC}.Debug|x86.ActiveCfg = Debug|x86
+		{71555EEF-8E5B-4E21-A30F-F4859C6670DC}.Debug|x86.Build.0 = Debug|x86
+		{71555EEF-8E5B-4E21-A30F-F4859C6670DC}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{71555EEF-8E5B-4E21-A30F-F4859C6670DC}.Release|Any CPU.Build.0 = Release|Any CPU
+		{71555EEF-8E5B-4E21-A30F-F4859C6670DC}.Release|x64.ActiveCfg = Release|x64
+		{71555EEF-8E5B-4E21-A30F-F4859C6670DC}.Release|x64.Build.0 = Release|x64
+		{71555EEF-8E5B-4E21-A30F-F4859C6670DC}.Release|x86.ActiveCfg = Release|x86
+		{71555EEF-8E5B-4E21-A30F-F4859C6670DC}.Release|x86.Build.0 = Release|x86
 		{5159DA95-280A-468E-AD5F-2B5775018D82}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
 		{5159DA95-280A-468E-AD5F-2B5775018D82}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{5159DA95-280A-468E-AD5F-2B5775018D82}.Debug|x64.ActiveCfg = Debug|x64

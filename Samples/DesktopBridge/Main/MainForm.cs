@@ -42,24 +42,21 @@ public partial class MainForm : Form
     /// </summary>
     ///
     /* --------------------------------------------------------------------- */
-    public MainForm(string src)
+    public MainForm(string[] args)
     {
         InitializeComponent();
 
-        var debug = new StringBuilder()
-            .AppendLine("https://github.com/cube-soft/cube.psa.samples")
-            .AppendLine(src);
+        var debug = new StringBuilder("https://github.com/cube-soft/cube.psa.samples");
+        foreach (var e in args) debug.AppendLine(e);
         DebugTextBox.Text = debug.ToString();
 
-        DestinationTextBox.Text = Path.Combine(
-            Environment.GetFolderPath(Environment.SpecialFolder.Desktop),
-            "TestResult.ps"
-        );
+        var desktop = Environment.GetFolderPath(Environment.SpecialFolder.Desktop);
+        DestinationTextBox.Text = Path.Combine(desktop, "TestResult.ps");
 
         SaveButton.Click += (_, _) => Hook(() =>
         {
             if (DestinationTextBox.Text.Length == 0) return;
-            File.Copy(src, DestinationTextBox.Text, true);
+            File.Copy(args[0], DestinationTextBox.Text, true);
             Close();
         }, debug);
 
