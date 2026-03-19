@@ -22,9 +22,9 @@ namespace Cube.Psa.DesktopBridge;
 /// Metadata
 ///
 /// <summary>
-/// Holds file and directory name constants shared between the virtual
-/// printer and the launcher. Intended to be extended with serializable
-/// job metadata fields as the workflow evolves.
+/// Represents the information shared across processes for a single print
+/// job. Carries the data needed for the virtual printer and the launcher
+/// to coordinate without direct communication.
 /// </summary>
 ///
 /* ------------------------------------------------------------------------- */
