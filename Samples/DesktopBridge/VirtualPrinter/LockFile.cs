@@ -57,8 +57,10 @@ internal sealed class LockFile(string path) : IDisposable
     /// Acquires the lock if not already held, then executes action.
     /// </summary>
     /// 
-    /// <param name="action">Additional user action.</param>
-    /// 
+    /// <param name="action">
+    /// The action to execute under the lock, e.g. writing the print data.
+    /// </param>
+    ///
     /// <returns>true on success; false on failure.</returns>
     ///
     /// <remarks>
@@ -90,7 +92,14 @@ internal sealed class LockFile(string path) : IDisposable
     /// transfers ownership of the lock file to the launcher.
     /// </summary>
     /// 
-    /// <param name="action">Additional user action.</param>
+    /// <param name="action">
+    /// The action to execute before transferring lock ownership, typically
+    /// launching the full-trust process.
+    /// </param>
+    ///
+    /// <exception cref="ObjectDisposedException">
+    /// Thrown if this instance has already been disposed.
+    /// </exception>
     ///
     /* --------------------------------------------------------------------- */
     public async Task ReleaseAsync(Func<Task> action)
@@ -195,7 +204,10 @@ internal sealed class LockFile(string path) : IDisposable
     /// lock file before returning.
     /// </summary>
     /// 
-    /// <param name="expire">Limit seconds.</param>
+    /// <param name="expire">
+    /// Timeout in seconds. If exceeded, the stale lock file is forcibly
+    /// deleted before returning.
+    /// </param>
     ///
     /* --------------------------------------------------------------------- */
     private async Task WaitAsync(int expire)
@@ -244,6 +256,7 @@ internal sealed class LockFile(string path) : IDisposable
     #endregion
 
     #region Fields
+    // Tracks the lifecycle of the lock file within a single job.
     private enum LockFileState { Idle, HalfLocked, Locked, Released }
     private LockFileState _state;
     private bool _disposed;

@@ -22,7 +22,9 @@ namespace Cube.Psa.DesktopBridge;
 /// Metadata
 ///
 /// <summary>
-/// Represents metadata of a printing job.
+/// Holds file and directory name constants shared between the virtual
+/// printer and the launcher. Intended to be extended with serializable
+/// job metadata fields as the workflow evolves.
 /// </summary>
 ///
 /* ------------------------------------------------------------------------- */
@@ -35,7 +37,8 @@ public sealed class Metadata
     /// DirectoryName
     ///
     /// <summary>
-    /// Represents the cache directory name.
+    /// The name of the publisher cache subfolder used to exchange data
+    /// between the virtual printer and the launcher.
     /// </summary>
     ///
     /* --------------------------------------------------------------------- */
@@ -46,7 +49,9 @@ public sealed class Metadata
     /// FileName
     ///
     /// <summary>
-    /// Represents the filename that contains the metadata of a job.
+    /// The name of the metadata file. Also used as the lock file that
+    /// coordinates exclusive access between the virtual printer and the
+    /// launcher.
     /// </summary>
     ///
     /* --------------------------------------------------------------------- */
@@ -57,7 +62,8 @@ public sealed class Metadata
     /// SourceFileName
     ///
     /// <summary>
-    /// Represents the filename that contains the printing data.
+    /// The name of the file that contains the raw print data written by
+    /// the virtual printer and read by the launcher.
     /// </summary>
     ///
     /* --------------------------------------------------------------------- */
