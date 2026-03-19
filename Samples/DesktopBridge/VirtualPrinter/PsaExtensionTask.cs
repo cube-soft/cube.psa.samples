@@ -25,7 +25,7 @@ using Windows.Graphics.Printing.PrintSupport;
 /// PsaExtensionTask
 ///
 /// <summary>
-/// Minimal implementation of the Windows.PrintSupportExtension feature.
+/// Minimal implementation of the PrintSupportExtension feature.
 /// </summary>
 ///
 /// <remarks>

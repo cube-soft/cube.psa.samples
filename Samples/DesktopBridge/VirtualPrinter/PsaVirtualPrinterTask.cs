@@ -31,8 +31,7 @@ using Windows.Storage.Streams;
 /// PsaVirtualPrinterTask
 ///
 /// <summary>
-/// Minimal implementation of the Windows.PrintSupportVirtualPrinterWorkflow
-/// feature for XPS-to-PDF conversion.
+/// Minimal implementation of the PrintSupportVirtualPrinterWorkflow feature.
 /// </summary>
 ///
 /* ------------------------------------------------------------------------- */
@@ -63,11 +62,11 @@ public sealed class PsaVirtualPrinterTask : IBackgroundTask
 
         session.VirtualPrinterDataAvailable += async (_, e) =>
         {
-            var status = PrintWorkflowSubmittedStatus.Failed;
-            try { status = await ProcessJobAsync(e); }
+            var done = false;
+            try { done = await InvokeAsync(e); }
             finally
             {
-                e.CompleteJob(status);
+                e.CompleteJob(done ? PrintWorkflowSubmittedStatus.Succeeded : PrintWorkflowSubmittedStatus.Failed);
                 deferral.Complete();
             }
         };
@@ -77,7 +76,7 @@ public sealed class PsaVirtualPrinterTask : IBackgroundTask
 
     /* --------------------------------------------------------------------- */
     ///
-    /// ProcessJobAsync
+    /// InvokeAsync
     ///
     /// <summary>
     /// Writes the incoming print data to the shared publisher cache and
@@ -89,33 +88,38 @@ public sealed class PsaVirtualPrinterTask : IBackgroundTask
     /// </param>
     ///
     /// <returns>
-    /// <see cref="PrintWorkflowSubmittedStatus.Succeeded"/> on success;
-    /// <see cref="PrintWorkflowSubmittedStatus.Failed"/> otherwise.
+    /// true on success; false otherwise.
     /// </returns>
     ///
     /* --------------------------------------------------------------------- */
-    private static async Task<PrintWorkflowSubmittedStatus> ProcessJobAsync(PrintWorkflowVirtualPrinterDataAvailableEventArgs e)
+    private static async Task<bool> InvokeAsync(PrintWorkflowVirtualPrinterDataAvailableEventArgs e)
     {
         var dir = ApplicationData.Current.GetPublisherCacheFolder("printing");
-        if (dir is null) return PrintWorkflowSubmittedStatus.Failed;
+        if (dir is null) return false;
 
         using var file = new LockFile(Path.Combine(dir.Path, "settings.json"));
-        var created = await file.LockAsync(async () =>
+        var done = await file.LockAsync(async () =>
         {
             var dest = await dir.CreateFileAsync("source.ps", CreationCollisionOption.ReplaceExisting);
             if (dest is null) return false;
 
-            using var stream = await dest.OpenAsync(FileAccessMode.ReadWrite);
-            await RandomAccessStream.CopyAndCloseAsync(e.SourceContent.GetInputStream(), stream.GetOutputStreamAt(stream.Size));
-
+            using var s = await dest.OpenAsync(FileAccessMode.ReadWrite);
+            await RandomAccessStream.CopyAndCloseAsync(e.SourceContent.GetInputStream(), s.GetOutputStreamAt(s.Size));
             return true;
         });
 
-        if (created)
-        {
-            await file.ReleaseAsync(async () => await FullTrustProcessLauncher.LaunchFullTrustProcessForCurrentAppAsync("Launcher"));
-            return PrintWorkflowSubmittedStatus.Succeeded;
-        }
-        else return PrintWorkflowSubmittedStatus.Failed;
+        if (done) await file.ReleaseAsync(LaunchAsync);
+        return done;
     }
+
+    /* --------------------------------------------------------------------- */
+    ///
+    /// LaunchAsync
+    ///
+    /// <summary>
+    /// Launches the full-trust launcher process to handle conversion.
+    /// </summary>
+    ///
+    /* --------------------------------------------------------------------- */
+    private static async Task LaunchAsync() => await FullTrustProcessLauncher.LaunchFullTrustProcessForCurrentAppAsync("Launcher");
 }

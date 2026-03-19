@@ -28,18 +28,20 @@ using System.Threading.Tasks;
 ///
 /// <summary>
 /// Manages exclusive access between the virtual printer and the launcher
-/// via a lock file (settings.json). The lock is acquired atomically by
-/// writing the file and released by deleting it.
+/// via a lock file. The lock is acquired atomically by writing the file
+/// and released by deleting it.
 /// </summary>
 ///
 /// <remarks>
 /// Typical call sequence per job:
+///
 /// 1. LockAsync  — acquire the lock and write the print data.
 ///    Returns true on success, false on failure.
-/// 2. ReleaseAsync — launch the full-trust process and transfer
-///    ownership of the lock file to the launcher.
-/// Dispose deletes the lock file when the job did not complete or
-/// was not handed off to the launcher (HalfLocked or Locked state).
+/// 2. ReleaseAsync — launch the full-trust process and transfer ownership
+///    of the lock file to the launcher.
+///
+/// Dispose() deletes the lock file when the job did not complete or
+/// was not handed off to the launcher.
 /// </remarks>
 ///
 /* ------------------------------------------------------------------------- */
@@ -53,9 +55,11 @@ internal sealed class LockFile(string path) : IDisposable
     ///
     /// <summary>
     /// Acquires the lock if not already held, then executes action.
-    /// Returns true on success; false on failure. On failure the lock
-    /// remains held so the action can be retried without re-acquiring.
     /// </summary>
+    /// 
+    /// <param name="action">Additional user action.</param>
+    /// 
+    /// <returns>true on success; false on failure.</returns>
     ///
     /// <remarks>
     /// Skips acquisition when the lock is already held (HalfLocked or
@@ -63,12 +67,8 @@ internal sealed class LockFile(string path) : IDisposable
     ///
     /// TODO: Consider whether re-calling after Released should be treated
     /// the same as Idle. To prevent unintended reuse, it may be better to
-    /// throw ObjectDisposedException after Released, as after Dispose.
+    /// throw ObjectDisposedException after Released, as after Dispose().
     /// </remarks>
-    ///
-    /// <exception cref="ObjectDisposedException">
-    /// Thrown if this instance has already been disposed.
-    /// </exception>
     ///
     /* --------------------------------------------------------------------- */
     public async Task<bool> LockAsync(Func<Task<bool>> action)
@@ -89,10 +89,8 @@ internal sealed class LockFile(string path) : IDisposable
     /// Executes action (typically launching the full-trust process) and
     /// transfers ownership of the lock file to the launcher.
     /// </summary>
-    ///
-    /// <exception cref="ObjectDisposedException">
-    /// Thrown if this instance has already been disposed.
-    /// </exception>
+    /// 
+    /// <param name="action">Additional user action.</param>
     ///
     /* --------------------------------------------------------------------- */
     public async Task ReleaseAsync(Func<Task> action)
@@ -109,6 +107,7 @@ internal sealed class LockFile(string path) : IDisposable
     /// <summary>
     /// Releases the lock if still held.
     /// </summary>
+    ///
     /// <remarks>
     /// Deletes the lock file when the job did not complete or was not
     /// handed off to the launcher (HalfLocked or Locked state).
@@ -180,7 +179,7 @@ internal sealed class LockFile(string path) : IDisposable
 
         var tmp = $"{path}.{Guid.NewGuid()}";
         File.WriteAllText(tmp, "{}");
-        await WaitAsync();
+        await WaitAsync(30);
         File.Move(tmp, path, overwrite: true);
         return LockFileState.HalfLocked;
     }
@@ -190,13 +189,16 @@ internal sealed class LockFile(string path) : IDisposable
     /// WaitAsync
     ///
     /// <summary>
-    /// Waits for the lock file to be deleted. If the file is not present,
-    /// returns immediately. If the wait exceeds 30 seconds, forcibly
-    /// deletes the stale lock file before returning.
+    /// Waits for the lock file to be deleted by another process.
+    /// If the file is not present, returns immediately.
+    /// If the wait exceeds expire seconds, forcibly deletes the stale
+    /// lock file before returning.
     /// </summary>
+    /// 
+    /// <param name="expire">Limit seconds.</param>
     ///
     /* --------------------------------------------------------------------- */
-    private async Task WaitAsync()
+    private async Task WaitAsync(int expire)
     {
         var dir = Path.GetDirectoryName(path);
         if (dir is null) return;
@@ -211,7 +213,7 @@ internal sealed class LockFile(string path) : IDisposable
 
         if (!File.Exists(path)) return;
 
-        using var cts = new CancellationTokenSource(TimeSpan.FromSeconds(30));
+        using var cts = new CancellationTokenSource(TimeSpan.FromSeconds(expire));
         try { await released.Task.WaitAsync(cts.Token); }
         catch (OperationCanceledException)
         {
