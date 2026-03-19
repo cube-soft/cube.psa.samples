@@ -60,6 +60,10 @@ internal sealed class LockFile(string path) : IDisposable
     /// <param name="action">
     /// The action to execute under the lock, e.g. writing the print data.
     /// </param>
+    /// 
+    /// <param name="metadata">
+    /// The metadata for this print job.
+    /// </param>
     ///
     /// <returns>true on success; false on failure.</returns>
     ///
@@ -73,11 +77,11 @@ internal sealed class LockFile(string path) : IDisposable
     /// </remarks>
     ///
     /* --------------------------------------------------------------------- */
-    public async Task<bool> LockAsync(Func<Task<bool>> action)
+    public async Task<bool> LockAsync(Func<Task<bool>> action, Metadata metadata)
     {
         ObjectDisposedException.ThrowIf(_disposed, this);
 
-        _state = await CreateAsync(_state);
+        _state = await CreateAsync(metadata, _state);
         var done = await action();
         if (done) _state = LockFileState.Locked;
         return done;
@@ -182,12 +186,12 @@ internal sealed class LockFile(string path) : IDisposable
     /// </summary>
     ///
     /* --------------------------------------------------------------------- */
-    private async Task<LockFileState> CreateAsync(LockFileState state)
+    private async Task<LockFileState> CreateAsync(Metadata metadata, LockFileState state)
     {
         if (IsLocked(state)) return state;
 
         var tmp = $"{path}.{Guid.NewGuid()}";
-        File.WriteAllText(tmp, "{}");
+        File.WriteAllText(tmp, "{}"); // TODO: serialize metadata
         await WaitAsync(30);
         File.Move(tmp, path, overwrite: true);
         return LockFileState.HalfLocked;
@@ -200,17 +204,17 @@ internal sealed class LockFile(string path) : IDisposable
     /// <summary>
     /// Waits for the lock file to be deleted by another process.
     /// If the file is not present, returns immediately.
-    /// If the wait exceeds expire seconds, forcibly deletes the stale
+    /// If the wait exceeds timeout seconds, forcibly deletes the stale
     /// lock file before returning.
     /// </summary>
     /// 
-    /// <param name="expire">
+    /// <param name="timeout">
     /// Timeout in seconds. If exceeded, the stale lock file is forcibly
     /// deleted before returning.
     /// </param>
     ///
     /* --------------------------------------------------------------------- */
-    private async Task WaitAsync(int expire)
+    private async Task WaitAsync(int timeout)
     {
         var dir = Path.GetDirectoryName(path);
         if (dir is null) return;
@@ -225,7 +229,7 @@ internal sealed class LockFile(string path) : IDisposable
 
         if (!File.Exists(path)) return;
 
-        using var cts = new CancellationTokenSource(TimeSpan.FromSeconds(expire));
+        using var cts = new CancellationTokenSource(TimeSpan.FromSeconds(timeout));
         try { await released.Task.WaitAsync(cts.Token); }
         catch (OperationCanceledException)
         {

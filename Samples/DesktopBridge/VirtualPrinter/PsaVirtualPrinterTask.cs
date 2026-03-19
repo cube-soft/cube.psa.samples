@@ -97,6 +97,13 @@ public sealed class PsaVirtualPrinterTask : IBackgroundTask
         var dir = ApplicationData.Current.GetPublisherCacheFolder(Metadata.DirectoryName);
         if (dir is null) return false;
 
+        var metadata = new Metadata
+        {
+            JobTitle  = e.Configuration.JobTitle,
+            SessionId = e.Configuration.SessionId,
+            AppName   = e.Configuration.SourceAppDisplayName,
+        };
+
         using var file = new LockFile(Path.Combine(dir.Path, Metadata.FileName));
         var done = await file.LockAsync(async () =>
         {
@@ -106,7 +113,7 @@ public sealed class PsaVirtualPrinterTask : IBackgroundTask
             using var s = await dest.OpenAsync(FileAccessMode.ReadWrite);
             await RandomAccessStream.CopyAndCloseAsync(e.SourceContent.GetInputStream(), s.GetOutputStreamAt(s.Size));
             return true;
-        });
+        }, metadata);
 
         if (done) await file.ReleaseAsync(LaunchAsync);
         return done;

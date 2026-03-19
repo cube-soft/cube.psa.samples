@@ -22,14 +22,52 @@ namespace Cube.Psa.DesktopBridge;
 /// Metadata
 ///
 /// <summary>
-/// Represents the information shared across processes for a single print
-/// job. Carries the data needed for the virtual printer and the launcher
+/// Represents the information shared across processes for a print job.
+/// Carries the data needed for the virtual printer and the launcher
 /// to coordinate without direct communication.
 /// </summary>
 ///
 /* ------------------------------------------------------------------------- */
 public sealed class Metadata
 {
+    #region Properteis
+
+    /* --------------------------------------------------------------------- */
+    ///
+    /// JobTitle
+    ///
+    /// <summary>
+    /// Gets or sets the title for this print job.
+    /// </summary>
+    ///
+    /* --------------------------------------------------------------------- */
+    public string JobTitle { get; set; } = string.Empty;
+
+    /* --------------------------------------------------------------------- */
+    ///
+    /// SessionId
+    ///
+    /// <summary>
+    /// Gets or sets the session ID for this print job.
+    /// </summary>
+    ///
+    /* --------------------------------------------------------------------- */
+    public string SessionId { get; set; } = string.Empty;
+
+    /* --------------------------------------------------------------------- */
+    ///
+    /// AppName
+    ///
+    /// <summary>
+    /// Gets or sets the display name of the external application that
+    /// initiated the print job.
+    /// </summary>
+    ///
+    /* --------------------------------------------------------------------- */
+    public string AppName { get; set; } = string.Empty;
+
+    #endregion
+
     #region Constants
 
     /* --------------------------------------------------------------------- */
