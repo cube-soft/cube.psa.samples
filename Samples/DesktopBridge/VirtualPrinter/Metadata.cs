@@ -32,7 +32,7 @@ using System.Threading.Tasks;
 /// </summary>
 ///
 /* ------------------------------------------------------------------------- */
-public sealed class Metadata
+internal sealed class Metadata
 {
     #region Methods
 

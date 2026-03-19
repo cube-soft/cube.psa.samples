@@ -31,6 +31,6 @@
     <RuntimeIdentifier>win-x64</RuntimeIdentifier>
   </PropertyGroup>
   <ItemGroup>
-    <ProjectReference Include="..\VirtualPrinter\Cube.Psa.DesktopBridge.VirtualPrinter.csproj" />
+    <Compile Include="..\VirtualPrinter\Metadata.cs" />
   </ItemGroup>
 </Project>
