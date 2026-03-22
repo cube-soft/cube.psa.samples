@@ -34,5 +34,6 @@
   </PropertyGroup>
   <ItemGroup>
     <PackageReference Include="Microsoft.Windows.CsWinRT" Version="2.2.0" />
+    <ProjectReference Include="..\Core\Cube.Psa.DesktopBridge.Core.csproj" />
   </ItemGroup>
 </Project>

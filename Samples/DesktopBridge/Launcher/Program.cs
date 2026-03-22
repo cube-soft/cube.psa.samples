@@ -1,4 +1,4 @@
-﻿/* ------------------------------------------------------------------------- */
+﻿﻿/* ------------------------------------------------------------------------- */
 //
 // Copyright (c) 2010 CubeSoft, Inc.
 //
@@ -20,6 +20,7 @@ namespace Cube.Psa.DesktopBridge;
 using System;
 using System.Diagnostics;
 using System.IO;
+using System.Threading.Tasks;
 using Windows.Storage;
 
 /* ------------------------------------------------------------------------- */
@@ -42,19 +43,23 @@ internal class Program
     /// </summary>
     ///
     /* --------------------------------------------------------------------- */
-    static void Main()
+    static async Task Main()
     {
-        var dir = ApplicationData.Current.GetPublisherCacheFolder("printing");
+        var dir = ApplicationData.Current.GetPublisherCacheFolder(Metadata.DirectoryName);
         if (dir is null) return;
 
-        var raw = Path.Combine(dir.Path, "source.ps");
+        var raw = Path.Combine(dir.Path, Metadata.SourceFileName);
         if (!File.Exists(raw)) return;
 
-        var src = Path.Combine(Path.GetTempPath(), Guid.NewGuid().ToString("N"));
+        var src = Path.Combine(Path.GetTempPath(), $"{Guid.NewGuid()}.dat");
         File.Move(raw, src);
 
         try
         {
+            var metadata = await Metadata.LoadAsync(Path.Combine(dir.Path, Metadata.FileName));
+            File.Delete(Path.Combine(dir.Path, Metadata.FileName));
+            File.Delete(Path.Combine(dir.Path, Metadata.LockFileName));
+
             var psi = new ProcessStartInfo
             {
                 FileName = "CubePsaApp.exe",
@@ -62,11 +67,21 @@ internal class Program
             };
 
             psi.ArgumentList.Add(src);
-            Process.Start(psi)?.WaitForExit();
+
+            if (metadata is not null)
+            {
+                psi.ArgumentList.Add("-JobTitle");
+                psi.ArgumentList.Add(metadata.JobTitle);
+                psi.ArgumentList.Add("-SessionID");
+                psi.ArgumentList.Add(metadata.SessionId);
+                psi.ArgumentList.Add("-AppName");
+                psi.ArgumentList.Add(metadata.AppName);
+            }
+
+            await (Process.Start(psi)?.WaitForExitAsync() ?? Task.CompletedTask);
         }
         finally
         {
-            if (File.Exists(raw)) File.Delete(raw);
             if (File.Exists(src)) File.Delete(src);
         }
     }
