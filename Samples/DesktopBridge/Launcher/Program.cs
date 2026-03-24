@@ -48,41 +48,53 @@ internal class Program
         var dir = ApplicationData.Current.GetPublisherCacheFolder(Metadata.DirectoryName);
         if (dir is null) return;
 
-        var raw = Path.Combine(dir.Path, Metadata.SourceFileName);
-        if (!File.Exists(raw)) return;
-
-        var src = Path.Combine(Path.GetTempPath(), $"{Guid.NewGuid()}.dat");
-        File.Move(raw, src);
+        var src  = Path.Combine(Path.GetTempPath(), $"{Guid.NewGuid()}.dat");
+        var meta = default(Metadata);
 
         try
         {
-            var metadata = await Metadata.LoadAsync(Path.Combine(dir.Path, Metadata.FileName));
+            var raw = Path.Combine(dir.Path, Metadata.SourceFileName);
+            if (!File.Exists(raw)) return;
+
+            File.Move(raw, src);
+            meta = await Metadata.LoadAsync(Path.Combine(dir.Path, Metadata.FileName));
             File.Delete(Path.Combine(dir.Path, Metadata.FileName));
-            File.Delete(Path.Combine(dir.Path, Metadata.LockFileName));
-
-            var psi = new ProcessStartInfo
-            {
-                FileName = "CubePsaApp.exe",
-                UseShellExecute = false,
-            };
-
-            psi.ArgumentList.Add(src);
-
-            if (metadata is not null)
-            {
-                psi.ArgumentList.Add("-JobTitle");
-                psi.ArgumentList.Add(metadata.JobTitle);
-                psi.ArgumentList.Add("-SessionID");
-                psi.ArgumentList.Add(metadata.SessionId);
-                psi.ArgumentList.Add("-AppName");
-                psi.ArgumentList.Add(metadata.AppName);
-            }
-
-            await (Process.Start(psi)?.WaitForExitAsync() ?? Task.CompletedTask);
         }
-        finally
+        finally { File.Delete(Path.Combine(dir.Path, Metadata.LockFileName)); }
+            
+        try { await (Process.Start(Create(src, meta))?.WaitForExitAsync() ?? Task.CompletedTask); }
+        finally { if (File.Exists(src)) File.Delete(src); }
+    }
+
+    /* --------------------------------------------------------------------- */
+    ///
+    /// Create
+    ///
+    /// <summary>
+    /// Creates a new instance of the ProcessStartInfo class.
+    /// </summary>
+    ///
+    /* --------------------------------------------------------------------- */
+    static ProcessStartInfo Create(string src, Metadata? metadata)
+    {
+        var dest = new ProcessStartInfo
         {
-            if (File.Exists(src)) File.Delete(src);
+            FileName = "CubePsaApp.exe",
+            UseShellExecute = false,
+        };
+
+        dest.ArgumentList.Add(src);
+
+        if (metadata is not null)
+        {
+            dest.ArgumentList.Add("-JobTitle");
+            dest.ArgumentList.Add(metadata.JobTitle);
+            dest.ArgumentList.Add("-SessionID");
+            dest.ArgumentList.Add(metadata.SessionId);
+            dest.ArgumentList.Add("-AppName");
+            dest.ArgumentList.Add(metadata.AppName);
         }
+
+        return dest;
     }
 }
