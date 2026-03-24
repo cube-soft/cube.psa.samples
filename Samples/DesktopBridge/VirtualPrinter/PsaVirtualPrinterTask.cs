@@ -97,27 +97,20 @@ public sealed class PsaVirtualPrinterTask : IBackgroundTask
         var dir = ApplicationData.Current.GetPublisherCacheFolder(Metadata.DirectoryName);
         if (dir is null) return false;
 
-        var metadata = new Metadata
-        {
-            JobTitle  = e.Configuration.JobTitle,
-            SessionId = e.Configuration.SessionId,
-            AppName   = e.Configuration.SourceAppDisplayName,
-        };
-
         using var file = new LockFile(Path.Combine(dir.Path, Metadata.LockFileName));
-        var done = await file.LockAsync(async () =>
+        return await file.LockAsync(async () =>
         {
             var dest = await dir.CreateFileAsync(Metadata.SourceFileName, CreationCollisionOption.ReplaceExisting);
             if (dest is null) return false;
 
             using var s = await dest.OpenAsync(FileAccessMode.ReadWrite);
             await RandomAccessStream.CopyAndCloseAsync(e.SourceContent.GetInputStream(), s.GetOutputStreamAt(s.Size));
-            await metadata.SaveAsync(Path.Combine(dir.Path, Metadata.FileName));
-            return true;
-        });
 
-        if (done) await file.ReleaseAsync(LaunchAsync);
-        return done;
+            var meta = CreateMetadata(e.Configuration);
+            await meta.SaveAsync(Path.Combine(dir.Path, Metadata.FileName));
+
+            return true;
+        }, LaunchAsync);
     }
 
     /* --------------------------------------------------------------------- */
@@ -130,4 +123,20 @@ public sealed class PsaVirtualPrinterTask : IBackgroundTask
     ///
     /* --------------------------------------------------------------------- */
     private static async Task LaunchAsync() => await FullTrustProcessLauncher.LaunchFullTrustProcessForCurrentAppAsync("Launcher");
+
+    /* --------------------------------------------------------------------- */
+    ///
+    /// CreateMetadata
+    ///
+    /// <summary>
+    /// Creates a new instance of the Metadata class.
+    /// </summary>
+    ///
+    /* --------------------------------------------------------------------- */
+    private static Metadata CreateMetadata(PrintWorkflowConfiguration src) => new()
+    {
+        JobTitle  = src.JobTitle,
+        SessionId = src.SessionId,
+        AppName   = src.SourceAppDisplayName,
+    };
 }
