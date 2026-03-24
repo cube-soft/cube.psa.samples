@@ -7,7 +7,7 @@ Note that the sample programs require SelfContained to be disabled. Therefore, t
 
 [Download .NET 8.0](https://dotnet.microsoft.com/en-us/download/dotnet/8.0)
 
-Currently, two samples are provided: [Minimal](https://github.com/cube-soft/cube.psa.samples/tree/master/Samples/Minimal), which represents the minimum configuration, and [DesktopBridge](https://github.com/cube-soft/cube.psa.samples/tree/master/Samples/DesktopBridge), which is an implementation that uses the Desktop Bridge feature. In both samples, the application side simply saves the print data received from the virtual printer to the specified path. When using these samples in practice, you must implement your own PDF conversion or similar processing. Our [CubePDF repository](https://github.com/cube-soft/cube.pdf) may be helpful as a reference. Additionally, in the DesktopBridge sample, printing multiple jobs consecutively before the final GUI application exits may cause data consistency issues. We are continuing to investigate how to handle consecutive print jobs safely.
+Currently, two samples are provided: [Minimal](https://github.com/cube-soft/cube.psa.samples/tree/master/Samples/Minimal), which represents the minimum configuration, and [DesktopBridge](https://github.com/cube-soft/cube.psa.samples/tree/master/Samples/DesktopBridge), which is an implementation that uses the Desktop Bridge feature. In both samples, the application side simply saves the print data received from the virtual printer to the specified path. When using these samples in practice, you must implement your own PDF conversion or similar processing. Our [CubePDF repository](https://github.com/cube-soft/cube.pdf) may be helpful as a reference.
 
 ## Background
 
