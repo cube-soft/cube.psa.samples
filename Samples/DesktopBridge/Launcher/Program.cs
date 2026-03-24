@@ -45,7 +45,7 @@ internal class Program
     /* --------------------------------------------------------------------- */
     static async Task Main()
     {
-        var dir = ApplicationData.Current.GetPublisherCacheFolder(Metadata.DirectoryName);
+        var dir = CacheFolder.Get();
         if (dir is null) return;
 
         var src  = Path.Combine(Path.GetTempPath(), $"{Guid.NewGuid()}.dat");

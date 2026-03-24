@@ -94,7 +94,7 @@ public sealed class PsaVirtualPrinterTask : IBackgroundTask
     /* --------------------------------------------------------------------- */
     private static async Task<bool> InvokeAsync(PrintWorkflowVirtualPrinterDataAvailableEventArgs e)
     {
-        var dir = ApplicationData.Current.GetPublisherCacheFolder(Metadata.DirectoryName);
+        var dir = CacheFolder.Get();
         if (dir is null) return false;
 
         using var file = new LockFile(Path.Combine(dir.Path, Metadata.LockFileName));

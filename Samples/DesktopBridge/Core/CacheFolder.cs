@@ -17,38 +17,53 @@
 /* ------------------------------------------------------------------------- */
 namespace Cube.Psa.DesktopBridge;
 
-using System;
-using System.Windows.Forms;
+using System.IO;
+using Windows.Storage;
 
 /* ------------------------------------------------------------------------- */
 ///
-/// Program
+/// CacheFolder
 ///
 /// <summary>
-/// Represents the main program.
+/// Provides access to the publisher cache folder shared between the
+/// virtual printer and the launcher.
 /// </summary>
 ///
 /* ------------------------------------------------------------------------- */
-internal static class Program
+public static class CacheFolder
 {
     /* --------------------------------------------------------------------- */
     ///
-    /// Main
+    /// Get
     ///
     /// <summary>
-    ///  The main entry point for the application.
+    /// Returns the publisher cache folder, or null if the folder is
+    /// unavailable.
     /// </summary>
     ///
     /* --------------------------------------------------------------------- */
-    [STAThread]
-    static void Main(string[] args)
+    public static StorageFolder Get() => ApplicationData.Current.GetPublisherCacheFolder(Metadata.DirectoryName);
+
+    /* --------------------------------------------------------------------- */
+    ///
+    /// Cleanup
+    ///
+    /// <summary>
+    /// Forcibly deletes the lock file if it exists. Called on startup
+    /// with no arguments (e.g. at install time) to remove any stale lock
+    /// file left by a previous abnormal termination.
+    /// </summary>
+    ///
+    /* --------------------------------------------------------------------- */
+    public static void Cleanup()
     {
-        if (args.Length <= 0) { CacheFolder.Cleanup(); return; }
+        var dir = Get();
+        if (dir is null) return;
 
-        // To customize application configuration such as set high DPI settings or default font,
-        // see https://aka.ms/applicationconfiguration.
-
-        ApplicationConfiguration.Initialize();
-        Application.Run(new MainForm(args));
+        var lok = Path.Combine(dir.Path, Metadata.LockFileName);
+        if (File.Exists(lok))
+        {
+            try { File.Delete(lok); } catch { }
+        }
     }
 }
