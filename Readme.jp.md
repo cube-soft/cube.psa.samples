@@ -7,7 +7,7 @@ PSA v4 Virtual Printer Samples
 
 [.NET 8.0 のダウンロード](https://dotnet.microsoft.com/ja-jp/download/dotnet/8.0)
 
-現在は、最小構成である [Minimal](https://github.com/cube-soft/cube.psa.samples/tree/master/Samples/Minimal)、および DesktopBridge 機能を利用した実装である [DesktopBridge](https://github.com/cube-soft/cube.psa.samples/tree/master/Samples/DesktopBridge) の 2 種類を公開しています。尚、どちらもアプリケーション側の処理は、仮想プリンター側から渡された印刷データを指定されたパスに保存するのみとなっています。そのため、実際に使用する際には PDF への変換処理等を別途実装する必要があります。PDF への変換処理については、[CubePDF リポジトリ](https://github.com/cube-soft/cube.pdf) 等も参考になる可能性があります。
+現在は、最小構成である [Minimal](https://github.com/cube-soft/cube.psa.samples/tree/master/Samples/Minimal)、および DesktopBridge 機能を利用した実装である [DesktopBridge](https://github.com/cube-soft/cube.psa.samples/tree/master/Samples/DesktopBridge) の 2 種類を公開しています。尚、どちらもアプリケーション側の処理は、仮想プリンター側から渡された印刷データを指定されたパスに保存するのみとなっています。そのため、実際に使用する際には PDF への変換処理等を別途実装する必要があります。PDF への変換処理については、[CubePDF リポジトリ](https://github.com/cube-soft/cube.pdf/tree/preview/psa/Applications/Converter) も参考になる可能性があります。
 
 ## 公開の背景
 
