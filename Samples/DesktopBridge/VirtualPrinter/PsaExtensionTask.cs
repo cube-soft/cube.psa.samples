@@ -1,4 +1,4 @@
-﻿﻿/* ------------------------------------------------------------------------- */
+﻿/* ------------------------------------------------------------------------- */
 //
 // Copyright (c) 2010 CubeSoft, Inc.
 //
@@ -50,6 +50,16 @@ public sealed class PsaExtensionTask : IBackgroundTask
     /// An interface to an instance of the background task.
     /// </param>
     ///
+    /// <remarks>
+    /// The try-catch in the PrintTicketValidationRequested handler guards
+    /// against a race condition specific to in-process background tasks:
+    /// if the task Canceled event fires concurrently, the session may be
+    /// torn down before the handler completes, causing session API calls to
+    /// throw 0x3E3 (ERROR_OPERATION_ABORTED). Without a catch, this exception
+    /// propagates into the host process and forces a termination — which is
+    /// why a second printer selection in Edge reliably causes a crash.
+    /// </remarks>
+    ///
     /* --------------------------------------------------------------------- */
     public void Run(IBackgroundTaskInstance task)
     {
@@ -66,7 +76,8 @@ public sealed class PsaExtensionTask : IBackgroundTask
 
         details.Session.PrintTicketValidationRequested += (_, e) =>
         {
-            using (e.GetDeferral()) e.SetPrintTicketValidationStatus(WorkflowPrintTicketValidationStatus.Resolved);
+            try { using (e.GetDeferral()) e.SetPrintTicketValidationStatus(WorkflowPrintTicketValidationStatus.Resolved); }
+            catch { /* see remarks */ }
         };
 
         details.Session.Start();

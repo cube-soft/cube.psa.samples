@@ -77,7 +77,8 @@ public sealed class PsaVirtualPrinterTask : IBackgroundTask
             }
             finally
             {
-                e.CompleteJob(status);
+                try { e.CompleteJob(status); }
+                catch { /* session may be torn down if Canceled fired concurrently (0x3E3) */ }
                 deferral.Complete();
             }
         };
