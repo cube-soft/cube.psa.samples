@@ -64,11 +64,9 @@ public sealed class PsaVirtualPrinterTask : IBackgroundTask
         {
             var done = false;
             try { done = await InvokeAsync(e); }
-            catch { /* session may be torn down if Canceled fired concurrently (0x3E3) */ }
             finally
             {
-                try { e.CompleteJob(done ? PrintWorkflowSubmittedStatus.Succeeded : PrintWorkflowSubmittedStatus.Failed); }
-                catch { /* session may be torn down if Canceled fired concurrently (0x3E3) */ }
+                e.CompleteJob(done ? PrintWorkflowSubmittedStatus.Succeeded : PrintWorkflowSubmittedStatus.Failed);
                 deferral.Complete();
             }
         };
