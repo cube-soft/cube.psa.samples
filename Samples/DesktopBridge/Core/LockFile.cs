@@ -45,9 +45,22 @@ using System.Threading.Tasks;
 /// </remarks>
 ///
 /* ------------------------------------------------------------------------- */
-public sealed class LockFile(string path) : IDisposable
+public sealed class LockFile : IDisposable
 {
     #region Methods
+
+    /* --------------------------------------------------------------------- */
+    ///
+    /// LockFile
+    ///
+    /// <summary>
+    /// Initializes a new instance with the specified lock file path.
+    /// </summary>
+    ///
+    /// <param name="path">Path of the lock file to manage.</param>
+    ///
+    /* --------------------------------------------------------------------- */
+    public LockFile(string path) => _path = path;
 
     /* --------------------------------------------------------------------- */
     ///
@@ -191,9 +204,9 @@ public sealed class LockFile(string path) : IDisposable
     {
         if (_disposed) return;
         _disposed = true;
-        if (IsHeld(_state))
+        if (IsLocked(_state))
         {
-            try { File.Delete(path); } catch { }
+            try { File.Delete(_path); } catch { }
         }
         _state = LockState.Idle;
     }
@@ -211,12 +224,12 @@ public sealed class LockFile(string path) : IDisposable
     /* --------------------------------------------------------------------- */
     private async Task<LockState> CreateAsync(LockState state)
     {
-        if (IsHeld(state)) return state;
+        if (IsLocked(state)) return state;
 
-        var tmp = $"{path}.{Guid.NewGuid()}";
+        var tmp = $"{_path}.{Guid.NewGuid()}";
         File.WriteAllText(tmp, "lock");
         await WaitAsync(600);
-        File.Move(tmp, path, overwrite: true);
+        File.Move(tmp, _path, overwrite: true);
         return LockState.Locked;
     }
 
@@ -239,24 +252,24 @@ public sealed class LockFile(string path) : IDisposable
     /* --------------------------------------------------------------------- */
     private async Task WaitAsync(int timeout)
     {
-        var dir = Path.GetDirectoryName(path);
+        var dir = Path.GetDirectoryName(_path);
         if (dir is null) return;
 
         var released = new TaskCompletionSource<bool>(TaskCreationOptions.RunContinuationsAsynchronously);
-        using var watcher = new FileSystemWatcher(dir, Path.GetFileName(path))
+        using var watcher = new FileSystemWatcher(dir, Path.GetFileName(_path))
         {
             NotifyFilter = NotifyFilters.FileName,
             EnableRaisingEvents = true,
         };
         watcher.Deleted += (_, _) => released.TrySetResult(true);
 
-        if (!File.Exists(path)) return;
+        if (!File.Exists(_path)) return;
 
         using var cts = new CancellationTokenSource(GetTimeout(timeout));
         try { await released.Task.WaitAsync(cts.Token); }
         catch (OperationCanceledException)
         {
-            try { File.Delete(path); } catch { }
+            try { File.Delete(_path); } catch { }
         }
     }
 
@@ -287,7 +300,7 @@ public sealed class LockFile(string path) : IDisposable
 
         try
         {
-            var elapsed = DateTime.UtcNow - File.GetLastWriteTimeUtc(path);
+            var elapsed = DateTime.UtcNow - File.GetLastWriteTimeUtc(_path);
             var result  = upper - elapsed;
 
             return result < lower ? lower :
@@ -298,7 +311,7 @@ public sealed class LockFile(string path) : IDisposable
 
     /* --------------------------------------------------------------------- */
     ///
-    /// IsHeld
+    /// IsLocked
     ///
     /// <summary>
     /// Determines whether the lock file is currently held by this
@@ -312,13 +325,14 @@ public sealed class LockFile(string path) : IDisposable
     /// </remarks>
     ///
     /* --------------------------------------------------------------------- */
-    private static bool IsHeld(LockState state) => state == LockState.Locked || state == LockState.Ready;
+    private static bool IsLocked(LockState state) => state == LockState.Locked || state == LockState.Ready;
 
     #endregion
 
     #region Fields
     // Tracks the lifecycle of the lock file within a single job.
     private enum LockState { Idle, Locked, Ready, Released }
+    private readonly string _path;
     private LockState _state;
     private bool _disposed;
     #endregion
