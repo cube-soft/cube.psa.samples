@@ -230,7 +230,7 @@ public sealed class LockFile(string path) : IDisposable
     /// If the wait exceeds timeout seconds, forcibly deletes the stale
     /// lock file before returning.
     /// </summary>
-    /// 
+    ///
     /// <param name="timeout">
     /// Timeout in seconds. If exceeded, the stale lock file is forcibly
     /// deleted before returning.
@@ -252,12 +252,48 @@ public sealed class LockFile(string path) : IDisposable
 
         if (!File.Exists(path)) return;
 
-        using var cts = new CancellationTokenSource(TimeSpan.FromSeconds(timeout));
+        using var cts = new CancellationTokenSource(GetTimeout(timeout));
         try { await released.Task.WaitAsync(cts.Token); }
         catch (OperationCanceledException)
         {
             try { File.Delete(path); } catch { }
         }
+    }
+
+    /* --------------------------------------------------------------------- */
+    ///
+    /// GetTimeout
+    ///
+    /// <summary>
+    /// Calculates the remaining timeout for the lock file based on its
+    /// last write time. Returns the full timeout if the time cannot be
+    /// determined.
+    /// </summary>
+    ///
+    /// <param name="timeout">Maximum timeout in seconds.</param>
+    ///
+    /// <returns>
+    /// The remaining wait duration, clamped to [100ms, timeout seconds].
+    /// The 100ms minimum ensures stale files are deleted via the shared
+    /// OperationCanceledException path rather than requiring a separate
+    /// early-exit branch.
+    /// </returns>
+    ///
+    /* --------------------------------------------------------------------- */
+    private TimeSpan GetTimeout(int timeout)
+    {
+        var lower = TimeSpan.FromMilliseconds(100);
+        var upper = TimeSpan.FromSeconds(timeout);
+
+        try
+        {
+            var elapsed = DateTime.UtcNow - File.GetLastWriteTimeUtc(path);
+            var result  = upper - elapsed;
+
+            return result < lower ? lower :
+                   result > upper ? upper : result;
+        }
+        catch { return upper; }
     }
 
     /* --------------------------------------------------------------------- */
